@@ -119,12 +119,15 @@ public class NetworkUtils {
         if (src.toFile().exists()) {
             if (task != null && src.resolve(task).toFile().exists()) {
                 src = src.resolve(task);
+            } else if (src.resolve(DEFAULT_SERVER_TEMPLATE).toFile().exists()) {
+                src = src.resolve(DEFAULT_SERVER_TEMPLATE);
+            } else {
+                src = this.serverTemplatePath.resolve(DEFAULT_SERVER_TEMPLATE);
             }
         } else {
             src = this.serverTemplatePath.resolve(DEFAULT_SERVER_TEMPLATE);
         }
         Path dest = this.networkPath.resolve(SERVERS).resolve(name);
-
 
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
     }
