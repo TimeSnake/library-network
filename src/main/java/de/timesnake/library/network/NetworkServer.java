@@ -15,6 +15,7 @@ public class NetworkServer {
     private int maxPlayers = DEFAULT_MAX_PLAYERS;
     private int playerTrackingRange = DEFAULT_PLAYER_TRACKING_RANGE;
     private boolean allowNether = false;
+    private boolean allowEnd = false;
 
     public NetworkServer(String name, int port, Type.Server<?> type, String velocitySecret) {
         this.name = name;
@@ -67,6 +68,19 @@ public class NetworkServer {
 
     public NetworkServer allowNether(boolean allow) {
         this.allowNether = allow;
+        return this;
+    }
+
+    public boolean isAllowEnd() {
+        return allowEnd;
+    }
+
+    public String isAllowEndString() {
+        return allowEnd ? "true" : "false";
+    }
+
+    public NetworkServer allowEnd(boolean allow) {
+        this.allowEnd = allow;
         return this;
     }
 

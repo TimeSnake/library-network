@@ -1,6 +1,6 @@
 settings:
   minimum-api: none
-  allow-end: true
+  allow-end: ${server.isAllowEndString()}
   warn-on-overload: true
   permissions-file: permissions.yml
   update-folder: update
