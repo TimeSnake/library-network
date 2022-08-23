@@ -11,16 +11,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class NetworkUtils {
 
+    public static final String DEFAULT_DIRECTORY = "default";
     public static final String TEMPLATE_DIR_NAME = "templates";
     public static final String SERVERS_TEMPLATE_NAME = "servers";
-    public static final String DEFAULT_SERVER_TEMPLATE = "default";
     public static final String WORLDS_TEMPLATE_NAME = "worlds";
+    public static final String PLAYERS_TEMPLATE_NAME = "players";
+    public static final String PLAYER_DATA = "playerdata";
     public static final String SERVERS = "servers";
 
     public static NetworkUtils getInstance() {
@@ -31,6 +35,7 @@ public class NetworkUtils {
     private final Path networkPath;
     private final Path serverTemplatePath;
     private final Path worldsTemplatePath;
+    private final Path playersTemplatePath;
 
     private Configuration cfg;
 
@@ -39,6 +44,7 @@ public class NetworkUtils {
         this.networkPath = networkPath;
         this.serverTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(SERVERS_TEMPLATE_NAME);
         this.worldsTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(WORLDS_TEMPLATE_NAME);
+        this.playersTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(PLAYERS_TEMPLATE_NAME);
 
         this.cfg = new Configuration(Configuration.VERSION_2_3_29);
         cfg.setClassForTemplateLoading(this.getClass(), "/templates");
@@ -50,7 +56,7 @@ public class NetworkUtils {
         cfg.setNumberFormat("0.######");
     }
 
-    public ServerCreationResult createServer(NetworkServer server, boolean copyWorlds) {
+    public ServerCreationResult createServer(NetworkServer server, boolean copyWorlds, boolean syncPlayerData) {
         try {
             this.copyServerBasis(server.getName(), server.getType(), server.getTask());
         } catch (IOException e) {
@@ -72,6 +78,16 @@ public class NetworkUtils {
         } catch (IOException | TemplateException e) {
             e.printStackTrace();
             return new ServerCreationResult.Fail("failed to generate config files");
+        }
+
+        if (syncPlayerData) {
+            try {
+                this.syncPlayerData(server.getName(), server.getType(), server.getTask());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return new ServerCreationResult.Fail("failed sync player data");
+            }
+
         }
 
         return new ServerCreationResult.Successful(this.networkPath.resolve(SERVERS).resolve(server.getName()));
@@ -119,13 +135,13 @@ public class NetworkUtils {
         if (src.toFile().exists()) {
             if (task != null && src.resolve(task).toFile().exists()) {
                 src = src.resolve(task);
-            } else if (src.resolve(DEFAULT_SERVER_TEMPLATE).toFile().exists()) {
-                src = src.resolve(DEFAULT_SERVER_TEMPLATE);
+            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
+                src = src.resolve(DEFAULT_DIRECTORY);
             } else {
-                src = this.serverTemplatePath.resolve(DEFAULT_SERVER_TEMPLATE);
+                src = this.serverTemplatePath.resolve(DEFAULT_DIRECTORY);
             }
         } else {
-            src = this.serverTemplatePath.resolve(DEFAULT_SERVER_TEMPLATE);
+            src = this.serverTemplatePath.resolve(DEFAULT_DIRECTORY);
         }
         Path dest = this.networkPath.resolve(SERVERS).resolve(name);
 
@@ -141,5 +157,104 @@ public class NetworkUtils {
         }
 
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
+    }
+
+    private void syncPlayerData(String name, Type.Server<?> type, String task) throws IOException {
+        Path src = this.playersTemplatePath.resolve(type.getDatabaseValue());
+
+        if (src.toFile().exists()) {
+            if (task != null && src.resolve(task).toFile().exists()) {
+                src = src.resolve(task);
+            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
+                src = src.resolve(DEFAULT_DIRECTORY);
+            } else {
+                src = this.playersTemplatePath.resolve(DEFAULT_DIRECTORY);
+            }
+        } else {
+            src = this.playersTemplatePath.resolve(DEFAULT_DIRECTORY);
+        }
+        src = src.resolve(PLAYER_DATA);
+        Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve("world").resolve("playerdata");
+
+        if (dest.toFile().exists()) {
+            dest.toFile().delete();
+        }
+
+        FileUtils.createParentDirectories(dest.toFile());
+        Files.createSymbolicLink(dest, src);
+    }
+
+    public WorldSyncResult syncWorld(NetworkServer server, String worldName) {
+
+        String name = server.getName();
+        Type.Server<?> type = server.getType();
+        String task = server.getTask();
+
+        Path src = this.worldsTemplatePath.resolve(type.getDatabaseValue());
+
+        if (src.toFile().exists()) {
+            if (task != null && src.resolve(task).toFile().exists()) {
+                src = src.resolve(task);
+            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
+                src = src.resolve(DEFAULT_DIRECTORY);
+            } else {
+                src = this.worldsTemplatePath.resolve(DEFAULT_DIRECTORY);
+            }
+        } else {
+            src = this.worldsTemplatePath.resolve(DEFAULT_DIRECTORY);
+        }
+
+        src = src.resolve(worldName);
+        Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve(worldName);
+
+        try {
+            Files.createSymbolicLink(dest, src);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new WorldSyncResult.Fail("failed to create world link");
+        }
+
+        return new WorldSyncResult.Successful(dest);
+    }
+
+    public WorldSyncResult exportAndSyncWorld(String serverName, String worldName, Path exportPath) {
+
+        Path src = this.networkPath.resolve(SERVERS).resolve(serverName).resolve(worldName);
+        Path dest = this.worldsTemplatePath.resolve(exportPath).resolve(worldName);
+
+        try {
+            FileUtils.copyDirectory(src.toFile(), dest.toFile());
+            FileUtils.deleteDirectory(src.toFile());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new WorldSyncResult.Fail("failed to export world");
+        }
+
+        try {
+            Files.createSymbolicLink(src, dest);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new WorldSyncResult.Fail("failed to create world link");
+        }
+
+        return new WorldSyncResult.Successful(dest);
+    }
+
+    public List<String> getWorldNames(Type.Server<?> type, String task) {
+        Path src = this.worldsTemplatePath.resolve(type.getDatabaseValue());
+
+        if (src.toFile().exists()) {
+            if (task != null && src.resolve(task).toFile().exists()) {
+                src = src.resolve(task);
+            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
+                src = src.resolve(DEFAULT_DIRECTORY);
+            } else {
+                src = this.worldsTemplatePath.resolve(DEFAULT_DIRECTORY);
+            }
+        } else {
+            src = this.worldsTemplatePath.resolve(DEFAULT_DIRECTORY);
+        }
+
+        return List.of(src.toFile().list());
     }
 }
