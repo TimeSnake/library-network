@@ -17,21 +17,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NetworkUtils {
+public class NetworkUtils implements Network {
 
-    public static final String DEFAULT_DIRECTORY = "default";
-    public static final String TEMPLATE_DIR_NAME = "templates";
-    public static final String SERVERS_TEMPLATE_NAME = "servers";
-    public static final String WORLDS_TEMPLATE_NAME = "worlds";
-    public static final String PLAYERS_TEMPLATE_NAME = "players";
-    public static final String PLAYER_DATA = "playerdata";
-    public static final String SERVERS = "servers";
-
-    public static NetworkUtils getInstance() {
+    public static Network getInstance() {
         return instance;
     }
 
-    private static NetworkUtils instance;
+    private static Network instance;
     private final Path networkPath;
     private final Path serverTemplatePath;
     private final Path worldsTemplatePath;
@@ -56,6 +48,7 @@ public class NetworkUtils {
         cfg.setNumberFormat("0.######");
     }
 
+    @Override
     public ServerCreationResult createServer(NetworkServer server, boolean copyWorlds, boolean syncPlayerData) {
         try {
             this.copyServerBasis(server.getName(), server.getType(), server.getTask());
@@ -93,7 +86,8 @@ public class NetworkUtils {
         return new ServerCreationResult.Successful(this.networkPath.resolve(SERVERS).resolve(server.getName()));
     }
 
-    private void generateConfigurations(NetworkServer server) throws IOException, TemplateException {
+    @Override
+    public void generateConfigurations(NetworkServer server) throws IOException, TemplateException {
         Template serverProperties = cfg.getTemplate("server.properties.ftl");
         Template paperGlobal = cfg.getTemplate("paper-global.yml.ftl");
         Template spigot = cfg.getTemplate("spigot.yml.ftl");
@@ -129,7 +123,8 @@ public class NetworkUtils {
         outBukkit.close();
     }
 
-    private void copyServerBasis(String name, Type.Server<?> type, String task) throws IOException {
+    @Override
+    public void copyServerBasis(String name, Type.Server<?> type, String task) throws IOException {
         Path src = this.serverTemplatePath.resolve(type.getDatabaseValue());
 
         if (src.toFile().exists()) {
@@ -148,7 +143,8 @@ public class NetworkUtils {
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
     }
 
-    private void copyServerWorlds(String name, Type.Server<?> type, String task) throws IOException {
+    @Override
+    public void copyServerWorlds(String name, Type.Server<?> type, String task) throws IOException {
         Path src = this.worldsTemplatePath.resolve(type.getDatabaseValue());
         Path dest = this.networkPath.resolve(SERVERS).resolve(name);
 
@@ -159,7 +155,8 @@ public class NetworkUtils {
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
     }
 
-    private void syncPlayerData(String name, Type.Server<?> type, String task) throws IOException {
+    @Override
+    public void syncPlayerData(String name, Type.Server<?> type, String task) throws IOException {
         Path src = this.playersTemplatePath.resolve(type.getDatabaseValue());
 
         if (src.toFile().exists()) {
@@ -184,6 +181,7 @@ public class NetworkUtils {
         Files.createSymbolicLink(dest, src);
     }
 
+    @Override
     public WorldSyncResult syncWorld(NetworkServer server, String worldName) {
 
         String name = server.getName();
@@ -217,6 +215,7 @@ public class NetworkUtils {
         return new WorldSyncResult.Successful(dest);
     }
 
+    @Override
     public WorldSyncResult exportAndSyncWorld(String serverName, String worldName, Path exportPath) {
 
         Path src = this.networkPath.resolve(SERVERS).resolve(serverName).resolve(worldName);
@@ -240,6 +239,7 @@ public class NetworkUtils {
         return new WorldSyncResult.Successful(dest);
     }
 
+    @Override
     public List<String> getWorldNames(Type.Server<?> type, String task) {
         Path src = this.worldsTemplatePath.resolve(type.getDatabaseValue());
 

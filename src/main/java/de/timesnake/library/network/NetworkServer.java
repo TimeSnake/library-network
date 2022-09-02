@@ -4,6 +4,7 @@ import de.timesnake.database.util.object.Type;
 
 public class NetworkServer {
 
+    public static final int DEFAULT_MAX_HEALTH = 2048;
     public static final int DEFAULT_MAX_PLAYERS = 100;
     public static final int DEFAULT_PLAYER_TRACKING_RANGE = 48;
 
@@ -14,6 +15,7 @@ public class NetworkServer {
     private String task;
     private int maxPlayers = DEFAULT_MAX_PLAYERS;
     private int playerTrackingRange = DEFAULT_PLAYER_TRACKING_RANGE;
+    private int maxHealth = DEFAULT_MAX_HEALTH;
     private boolean allowNether = false;
     private boolean allowEnd = false;
 
@@ -90,6 +92,15 @@ public class NetworkServer {
 
     public NetworkServer setPlayerTrackingRange(int playerTrackingRange) {
         this.playerTrackingRange = playerTrackingRange;
+        return this;
+    }
+
+    public int getMaxHealth() {
+        return maxHealth;
+    }
+
+    public NetworkServer setMaxHealth(int maxHealth) {
+        this.maxHealth = maxHealth;
         return this;
     }
 }
