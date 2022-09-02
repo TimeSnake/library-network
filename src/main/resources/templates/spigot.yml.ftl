@@ -13,7 +13,7 @@ settings:
   netty-threads: 16
   attribute:
     maxHealth:
-      max: 2048.0
+      max: ${server.getMaxHealth()}
     movementSpeed:
       max: 2048.0
     attackDamage:
