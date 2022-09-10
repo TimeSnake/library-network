@@ -1,5 +1,7 @@
 package de.timesnake.library.network;
 
+import com.moandjiezana.toml.Toml;
+import com.moandjiezana.toml.TomlWriter;
 import de.timesnake.database.util.object.Type;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -7,15 +9,11 @@ import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import org.apache.commons.io.FileUtils;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class NetworkUtils implements Network {
 
@@ -29,7 +27,7 @@ public class NetworkUtils implements Network {
     private final Path worldsTemplatePath;
     private final Path playersTemplatePath;
 
-    private Configuration cfg;
+    private final Configuration cfg;
 
     public NetworkUtils(Path networkPath) {
         instance = this;
@@ -105,6 +103,7 @@ public class NetworkUtils implements Network {
 
         Writer outServerProperties = new OutputStreamWriter(new FileOutputStream(this.networkPath.resolve(SERVERS)
                 .resolve(server.getName()).resolve("server.properties").toFile()));
+        Files.createDirectories(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("config"));
         Writer outPaperGlobal = new OutputStreamWriter(new FileOutputStream(this.networkPath.resolve(SERVERS)
                 .resolve(server.getName()).resolve("config").resolve("paper-global.yml").toFile()));
         Writer outSpigot = new OutputStreamWriter(new FileOutputStream(this.networkPath.resolve(SERVERS)
@@ -125,22 +124,8 @@ public class NetworkUtils implements Network {
 
     @Override
     public void copyServerBasis(String name, Type.Server<?> type, String task) throws IOException {
-        Path src = this.serverTemplatePath.resolve(type.getDatabaseValue());
-
-        if (src.toFile().exists()) {
-            if (task != null && src.resolve(task).toFile().exists()) {
-                src = src.resolve(task);
-            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
-                src = src.resolve(DEFAULT_DIRECTORY);
-            } else {
-                src = this.serverTemplatePath.resolve(DEFAULT_DIRECTORY);
-            }
-        } else {
-            src = this.serverTemplatePath.resolve(DEFAULT_DIRECTORY);
-        }
         Path dest = this.networkPath.resolve(SERVERS).resolve(name);
-
-        FileUtils.copyDirectory(src.toFile(), dest.toFile());
+        this.copyServerFromTemplate(type, task, dest);
     }
 
     @Override
@@ -157,19 +142,8 @@ public class NetworkUtils implements Network {
 
     @Override
     public void syncPlayerData(String name, Type.Server<?> type, String task) throws IOException {
-        Path src = this.playersTemplatePath.resolve(type.getDatabaseValue());
+        Path src = this.resolveTemplatePath(this.playersTemplatePath, type, task, DEFAULT_DIRECTORY);
 
-        if (src.toFile().exists()) {
-            if (task != null && src.resolve(task).toFile().exists()) {
-                src = src.resolve(task);
-            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
-                src = src.resolve(DEFAULT_DIRECTORY);
-            } else {
-                src = this.playersTemplatePath.resolve(DEFAULT_DIRECTORY);
-            }
-        } else {
-            src = this.playersTemplatePath.resolve(DEFAULT_DIRECTORY);
-        }
         src = src.resolve(PLAYER_DATA);
         Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve("world").resolve("playerdata");
 
@@ -188,19 +162,7 @@ public class NetworkUtils implements Network {
         Type.Server<?> type = server.getType();
         String task = server.getTask();
 
-        Path src = this.worldsTemplatePath.resolve(type.getDatabaseValue());
-
-        if (src.toFile().exists()) {
-            if (task != null && src.resolve(task).toFile().exists()) {
-                src = src.resolve(task);
-            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
-                src = src.resolve(DEFAULT_DIRECTORY);
-            } else {
-                src = this.worldsTemplatePath.resolve(DEFAULT_DIRECTORY);
-            }
-        } else {
-            src = this.worldsTemplatePath.resolve(DEFAULT_DIRECTORY);
-        }
+        Path src = this.resolveTemplatePath(this.worldsTemplatePath, type, task, DEFAULT_DIRECTORY);
 
         src = src.resolve(worldName);
         Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve(worldName);
@@ -241,20 +203,264 @@ public class NetworkUtils implements Network {
 
     @Override
     public List<String> getWorldNames(Type.Server<?> type, String task) {
-        Path src = this.worldsTemplatePath.resolve(type.getDatabaseValue());
+        Path src = this.resolveTemplatePath(this.worldsTemplatePath, type, task, DEFAULT_DIRECTORY);
+        return List.of(src.toFile().list());
+    }
 
-        if (src.toFile().exists()) {
-            if (task != null && src.resolve(task).toFile().exists()) {
-                src = src.resolve(task);
-            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
-                src = src.resolve(DEFAULT_DIRECTORY);
-            } else {
-                src = this.worldsTemplatePath.resolve(DEFAULT_DIRECTORY);
-            }
-        } else {
-            src = this.worldsTemplatePath.resolve(DEFAULT_DIRECTORY);
+    @Override
+    public ServerCreationResult createPublicPlayerServer(NetworkServer server) {
+        return this.createPlayerServer(PUBLIC_DIRECTORY, server);
+    }
+
+    @Override
+    public ServerCreationResult createPlayerServer(UUID uuid, NetworkServer server) {
+        return this.createPlayerServer(uuid.toString(), server);
+    }
+
+    private ServerCreationResult createPlayerServer(String owner, NetworkServer server) {
+        Path dest = this.networkPath.resolve(SERVERS).resolve(server.getName());
+
+        try {
+            Files.createDirectories(dest);
+            Path src = this.serverTemplatePath.resolve(server.getType().getDatabaseValue()).resolve(server.getTask())
+                    .resolve(owner).resolve(server.getName());
+            this.createSymLinks(src, dest);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ServerCreationResult.Fail("failed to create player-file links");
         }
 
-        return List.of(src.toFile().list());
+        try {
+            this.copyServerBasis(server.getName(), server.getType(), server.getTask());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ServerCreationResult.Fail("no server template found");
+        }
+
+        try {
+            this.generateConfigurations(server);
+        } catch (IOException | TemplateException e) {
+            e.printStackTrace();
+            return new ServerCreationResult.Fail("failed to generate config files");
+        }
+
+        return new ServerCreationResult.Successful(dest);
+    }
+
+    @Override
+    public ServerInitResult initPublicPlayerServer(Type.Server<?> type, String task, String name) {
+        return this.initPlayerServer(DEFAULT_DIRECTORY, type, task, name);
+    }
+
+    @Override
+    public ServerInitResult initPlayerServer(UUID uuid, Type.Server<?> type, String task, String name) {
+        Path dest = this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task)
+                .resolve(uuid.toString()).resolve(name);
+
+        ServerInitResult result = this.initPlayerServer(uuid.toString(), type, task, name);
+
+        if (!result.isSuccessful()) {
+            return result;
+        }
+
+        File infoFile = new File(dest.toFile(), OWN_SERVER_INFO_FILE_NAME);
+
+        if (!infoFile.exists()) {
+            try {
+                infoFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return new ServerInitResult.Fail("failed to create server info file");
+            }
+        }
+
+        TomlWriter tomlWriter = new TomlWriter();
+
+        try {
+            tomlWriter.write(Map.of(OWN_SERVER_OWNER_UUID, uuid.toString()), infoFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ServerInitResult.Fail("failed to write into server info file");
+        }
+
+        return new ServerInitResult.Successful(dest);
+    }
+
+    private ServerInitResult initPlayerServer(String owner, Type.Server<?> type, String task, String name) {
+        Path dest = this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task)
+                .resolve(owner).resolve(name);
+
+        try {
+            this.copyServerFromPlayerTemplate(type, task, dest);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ServerInitResult.Fail("no server template found");
+        }
+        return new ServerInitResult.Successful(dest);
+    }
+
+    @Override
+    public List<String> getPublicPlayerServerNames(Type.Server<?> type, String task) {
+        return this.getPlayerServerNames(PUBLIC_DIRECTORY, type, task);
+    }
+
+    @Override
+    public List<String> getOwnerServerNames(UUID uuid, Type.Server<?> type, String task) {
+        return this.getPlayerServerNames(uuid.toString(), type, task).stream()
+                .map(f -> f.replaceFirst(String.valueOf(uuid.hashCode()), ""))
+                .toList();
+    }
+
+    private List<String> getPlayerServerNames(String owner, Type.Server<?> type, String task) {
+        try {
+            Path src = this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task).resolve(owner);
+            String[] files = src.toFile().list();
+            return files != null ? List.of(files) : List.of();
+        } catch (InvalidPathException e) {
+            return List.of();
+        }
+    }
+
+    @Override
+    public Map<UUID, List<String>> getMemberServerNames(UUID member, Type.Server<?> type, String task) {
+        Path src = this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task);
+
+        HashMap<UUID, List<String>> serverNamesByOwnerUuid = new HashMap<>();
+
+
+        for (Map.Entry<UUID, List<String>> entry : this.getAllPlayerServerNames(type, task).entrySet()) {
+            UUID uuid = entry.getKey();
+            for (String serverName : entry.getValue()) {
+                Toml toml;
+                try {
+                    toml = new Toml().read(src.resolve(uuid.toString()).resolve(serverName).resolve(OWN_SERVER_INFO_FILE_NAME).toFile());
+                } catch (IllegalStateException e) {
+                    continue;
+                }
+
+                List<String> memberUuidStrings = toml.getList(OWN_SERVER_MEMBER_UUIDS);
+
+                if (memberUuidStrings.contains(member.toString())) {
+                    serverNamesByOwnerUuid.computeIfAbsent(uuid, uuid1 -> new LinkedList<>()).add(serverName);
+                }
+            }
+        }
+
+        return serverNamesByOwnerUuid;
+    }
+
+    private Map<UUID, List<String>> getAllPlayerServerNames(Type.Server<?> type, String task) {
+        Path src = this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task);
+
+        String[] playerFiles = src.toFile().list();
+        if (playerFiles == null) return Map.of();
+
+        HashMap<UUID, List<String>> serverNamesByOwnerUuid = new HashMap<>();
+
+        for (String playerFile : playerFiles) {
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(playerFile);
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+
+            Path playerPath = src.resolve(playerFile);
+
+            String[] serverNames = playerPath.toFile().list();
+            if (serverNames == null) continue;
+
+            serverNamesByOwnerUuid.put(uuid, List.of(serverNames));
+        }
+
+        return serverNamesByOwnerUuid;
+    }
+
+
+    @Override
+    public List<UUID> getPlayerServerMembers(UUID uuid, Type.Server<?> type, String task, String exactName) {
+        Toml toml;
+        try {
+            toml = new Toml().read(this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task)
+                    .resolve(uuid.toString()).resolve(exactName).resolve(OWN_SERVER_INFO_FILE_NAME).toFile());
+        } catch (IllegalStateException e) {
+            return List.of();
+        }
+
+        List<String> memberUuidStrings = toml.getList(OWN_SERVER_MEMBER_UUIDS);
+        return memberUuidStrings != null ? memberUuidStrings.stream().map(UUID::fromString).toList() : List.of();
+    }
+
+    @Override
+    public boolean setPlayerServerMembers(UUID uuid, Type.Server<?> type, String task, String exactName, List<UUID> memberUuids) {
+        Path path;
+        try {
+            path = this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task)
+                    .resolve(uuid.toString()).resolve(exactName);
+        } catch (InvalidPathException e) {
+            e.printStackTrace();
+            return false;
+        }
+        File infoFile = new File(path.toFile(), OWN_SERVER_INFO_FILE_NAME);
+
+        if (!infoFile.exists()) {
+            try {
+                infoFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        TomlWriter tomlWriter = new TomlWriter();
+
+        try {
+            tomlWriter.write(Map.of(OWN_SERVER_MEMBER_UUIDS, memberUuids.stream().map(UUID::toString).toList()), infoFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void copyServerFromTemplate(Type.Server<?> type, String task, Path dest) throws IOException {
+        Path src = this.resolveTemplatePath(this.serverTemplatePath, type, task, DEFAULT_DIRECTORY);
+        FileUtils.copyDirectory(src.toFile(), dest.toFile());
+    }
+
+    private void copyServerFromPlayerTemplate(Type.Server<?> type, String task, Path dest) throws IOException {
+        Path src = this.resolveTemplatePath(this.serverTemplatePath, type, task, DEFAULT_PLAYER_DIRECTORY);
+        FileUtils.copyDirectory(src.toFile(), dest.toFile());
+    }
+
+    private void createSymLinks(Path src, Path dest) throws IOException {
+        String[] fileNames = src.toFile().list();
+        this.createSymLinks(src, fileNames != null ? List.of(fileNames) : List.of(), dest);
+    }
+
+    private void createSymLinks(Path src, List<String> files, Path dest) throws IOException {
+        for (String fileName : files) {
+            Files.createSymbolicLink(dest.resolve(fileName), src.resolve(fileName));
+        }
+    }
+
+    private Path resolveTemplatePath(Path base, Type.Server<?> type, String task, String defaultDir) {
+        if (base.resolve(type.getDatabaseValue()).toFile().exists()) {
+            base = base.resolve(type.getDatabaseValue());
+            if (task != null && base.resolve(task).toFile().exists()) {
+                base = base.resolve(task);
+                if (base.resolve(defaultDir).toFile().exists()) {
+                    base = base.resolve(defaultDir);
+                }
+            } else if (base.resolve(defaultDir).toFile().exists()) {
+                base = base.resolve(defaultDir);
+            } else {
+                base = base.resolve(defaultDir);
+            }
+        } else {
+            base = base.resolve(defaultDir);
+        }
+        return base;
     }
 }
