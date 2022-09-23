@@ -123,8 +123,8 @@ public class NetworkUtils implements Network {
     }
 
     @Override
-    public void copyServerBasis(String name, Type.Server<?> type, String task) throws IOException {
-        Path dest = this.networkPath.resolve(SERVERS).resolve(name);
+    public void copyServerBasis(String serverName, Type.Server<?> type, String task) throws IOException {
+        Path dest = this.networkPath.resolve(SERVERS).resolve(serverName);
         this.copyServerFromTemplate(type, task, dest);
     }
 
@@ -223,7 +223,7 @@ public class NetworkUtils implements Network {
         try {
             Files.createDirectories(dest);
             Path src = this.serverTemplatePath.resolve(server.getType().getDatabaseValue()).resolve(server.getTask())
-                    .resolve(owner).resolve(server.getName());
+                    .resolve(owner).resolve(server.getFolderName());
             this.createSymLinks(src, dest);
         } catch (IOException e) {
             e.printStackTrace();
@@ -306,9 +306,7 @@ public class NetworkUtils implements Network {
 
     @Override
     public List<String> getOwnerServerNames(UUID uuid, Type.Server<?> type, String task) {
-        return this.getPlayerServerNames(uuid.toString(), type, task).stream()
-                .map(f -> f.replaceFirst(String.valueOf(uuid.hashCode()), ""))
-                .toList();
+        return this.getPlayerServerNames(uuid.toString(), type, task);
     }
 
     private List<String> getPlayerServerNames(String owner, Type.Server<?> type, String task) {
@@ -340,7 +338,7 @@ public class NetworkUtils implements Network {
 
                 List<String> memberUuidStrings = toml.getList(OWN_SERVER_MEMBER_UUIDS);
 
-                if (memberUuidStrings.contains(member.toString())) {
+                if (memberUuidStrings != null && memberUuidStrings.contains(member.toString())) {
                     serverNamesByOwnerUuid.computeIfAbsent(uuid, uuid1 -> new LinkedList<>()).add(serverName);
                 }
             }
@@ -379,10 +377,16 @@ public class NetworkUtils implements Network {
 
     @Override
     public List<UUID> getPlayerServerMembers(UUID uuid, Type.Server<?> type, String task, String exactName) {
+        File config = this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task)
+                .resolve(uuid.toString()).resolve(exactName).resolve(OWN_SERVER_INFO_FILE_NAME).toFile();
+
+        if (!config.exists()) {
+            return List.of();
+        }
+
         Toml toml;
         try {
-            toml = new Toml().read(this.serverTemplatePath.resolve(type.getDatabaseValue()).resolve(task)
-                    .resolve(uuid.toString()).resolve(exactName).resolve(OWN_SERVER_INFO_FILE_NAME).toFile());
+            toml = new Toml().read(config);
         } catch (IllegalStateException e) {
             return List.of();
         }

@@ -12,6 +12,7 @@ public class NetworkServer {
     private final int port;
     private final Type.Server<?> type;
     private final String velocitySecret;
+    private String folderName;
     private String task;
     private int maxPlayers = DEFAULT_MAX_PLAYERS;
     private int playerTrackingRange = DEFAULT_PLAYER_TRACKING_RANGE;
@@ -21,6 +22,7 @@ public class NetworkServer {
 
     public NetworkServer(String name, int port, Type.Server<?> type, String velocitySecret) {
         this.name = name;
+        this.folderName = name;
         this.port = port;
         this.type = type;
         this.velocitySecret = velocitySecret;
@@ -36,6 +38,15 @@ public class NetworkServer {
 
     public Type.Server<?> getType() {
         return type;
+    }
+
+    public String getFolderName() {
+        return folderName;
+    }
+
+    public NetworkServer setFolderName(String name) {
+        this.folderName = name;
+        return this;
     }
 
     public String getTask() {
