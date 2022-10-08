@@ -26,6 +26,7 @@ public class NetworkUtils implements Network {
     private final Path serverTemplatePath;
     private final Path worldsTemplatePath;
     private final Path playersTemplatePath;
+    private final Path logsPath;
 
     private final Configuration cfg;
 
@@ -35,6 +36,7 @@ public class NetworkUtils implements Network {
         this.serverTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(SERVERS_TEMPLATE_NAME);
         this.worldsTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(WORLDS_TEMPLATE_NAME);
         this.playersTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(PLAYERS_TEMPLATE_NAME);
+        this.logsPath = this.networkPath.resolve(LOGS_DIR_NAME);
 
         this.cfg = new Configuration(Configuration.VERSION_2_3_29);
         cfg.setClassForTemplateLoading(this.getClass(), "/templates");
@@ -76,9 +78,15 @@ public class NetworkUtils implements Network {
                 this.syncPlayerData(server.getName(), server.getType(), server.getTask());
             } catch (IOException e) {
                 e.printStackTrace();
-                return new ServerCreationResult.Fail("failed sync player data");
+                return new ServerCreationResult.Fail("failed to sync player data");
             }
+        }
 
+        try {
+            this.syncLogs(server.getName(), server.getType(), server.getTask());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new ServerCreationResult.Fail("failed to sync logs");
         }
 
         return new ServerCreationResult.Successful(this.networkPath.resolve(SERVERS).resolve(server.getName()));
@@ -138,6 +146,27 @@ public class NetworkUtils implements Network {
         }
 
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
+    }
+
+    @Override
+    public void syncLogs(String name, Type.Server<?> type, String task) throws IOException {
+        Path src = this.logsPath.resolve(type.getDatabaseValue());
+
+        if (task != null) {
+            src = src.resolve(task);
+        }
+
+        src = src.resolve(name).resolve(DATE_FORMAT.format(new Date()));
+
+        Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve("logs");
+
+        if (dest.toFile().exists()) {
+            dest.toFile().delete();
+        }
+
+        Files.createDirectories(src);
+        FileUtils.createParentDirectories(dest.toFile());
+        Files.createSymbolicLink(dest, src);
     }
 
     @Override
@@ -242,6 +271,12 @@ public class NetworkUtils implements Network {
         } catch (IOException | TemplateException e) {
             e.printStackTrace();
             return new ServerCreationResult.Fail("failed to generate config files");
+        }
+
+        try {
+            this.syncPlayerData(owner + "_" + server.getName(), server.getType(), server.getTask());
+        } catch (IOException e) {
+            return new ServerCreationResult.Fail("failed to sync logs");
         }
 
         return new ServerCreationResult.Successful(dest);
