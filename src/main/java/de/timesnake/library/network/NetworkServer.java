@@ -25,6 +25,8 @@ public class NetworkServer {
     public static final int DEFAULT_MAX_HEALTH = 2048;
     public static final int DEFAULT_MAX_PLAYERS = 100;
     public static final int DEFAULT_PLAYER_TRACKING_RANGE = 48;
+    public static final int DEFAULT_VIEW_DISTANCE = 10;
+    public static final int DEFAULT_SIMULATION_DISTANCE = 10;
 
     private final String name;
     private final int port;
@@ -37,6 +39,8 @@ public class NetworkServer {
     private int maxHealth = DEFAULT_MAX_HEALTH;
     private boolean allowNether = false;
     private boolean allowEnd = false;
+    private int viewDistance = DEFAULT_VIEW_DISTANCE;
+    private int simulationDistance = DEFAULT_SIMULATION_DISTANCE;
 
     public NetworkServer(String name, int port, Type.Server<?> type, String velocitySecret) {
         this.name = name;
@@ -130,6 +134,24 @@ public class NetworkServer {
 
     public NetworkServer setMaxHealth(int maxHealth) {
         this.maxHealth = maxHealth;
+        return this;
+    }
+
+    public int getViewDistance() {
+        return this.viewDistance;
+    }
+
+    public NetworkServer setViewDistance(int viewDistance) {
+        this.viewDistance = viewDistance;
+        return this;
+    }
+
+    public int getSimulationDistance() {
+        return this.simulationDistance;
+    }
+
+    public NetworkServer setSimulationDistance(int simulationDistance) {
+        this.simulationDistance = simulationDistance;
         return this;
     }
 }
