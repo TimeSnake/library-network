@@ -1,5 +1,5 @@
 /*
- * library-network.main
+ * workspace.library-network.main
  * Copyright (C) 2022 timesnake
  *
  * This program is free software; you can redistribute it and/or
@@ -503,21 +503,22 @@ public class NetworkUtils implements Network {
     }
 
     private Path resolveTemplatePath(Path base, Type.Server<?> type, String task, String defaultDir) {
-        if (base.resolve(type.getDatabaseValue()).toFile().exists()) {
-            base = base.resolve(type.getDatabaseValue());
-            if (task != null && base.resolve(task).toFile().exists()) {
-                base = base.resolve(task);
-                if (base.resolve(defaultDir).toFile().exists()) {
-                    base = base.resolve(defaultDir);
+        Path path = base.toAbsolutePath();
+        if (path.resolve(type.getDatabaseValue()).toFile().exists()) {
+            path = path.resolve(type.getDatabaseValue());
+            if (task != null && path.resolve(task).toFile().exists()) {
+                path = path.resolve(task);
+                if (path.resolve(defaultDir).toFile().exists()) {
+                    path = path.resolve(defaultDir);
                 }
-            } else if (base.resolve(defaultDir).toFile().exists()) {
-                base = base.resolve(defaultDir);
+            } else if (path.resolve(defaultDir).toFile().exists()) {
+                path = path.resolve(defaultDir);
             } else {
-                base = base.resolve(defaultDir);
+                path = base.resolve(defaultDir);
             }
         } else {
-            base = base.resolve(defaultDir);
+            path = path.resolve(defaultDir);
         }
-        return base;
+        return path;
     }
 }
