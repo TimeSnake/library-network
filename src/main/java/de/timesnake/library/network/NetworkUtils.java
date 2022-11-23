@@ -214,6 +214,15 @@ public class NetworkUtils implements Network {
         src = src.resolve(worldName);
         Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve(worldName);
 
+        if (dest.toFile().exists()) {
+            try {
+                FileUtils.delete(dest.toFile());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return new WorldSyncResult.Fail("failed to delete old world file");
+            }
+        }
+
         try {
             Files.createSymbolicLink(dest, src);
         } catch (IOException e) {
