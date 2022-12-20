@@ -491,7 +491,29 @@ public class NetworkUtils implements Network {
     }
 
     private void copyServerFromTemplate(Type.Server<?> type, String task, Path dest) throws IOException {
-        Path src = this.resolveTemplatePath(this.serverTemplatePath, type, task, DEFAULT_DIRECTORY);
+        Path src = this.serverTemplatePath.toAbsolutePath();
+
+        // from base
+        FileUtils.copyDirectory(src.resolve(BASIS_DIRECTORY).toFile(), dest.toFile());
+
+        if (src.resolve(type.getShortName()).toFile().exists()) {
+            src = src.resolve(type.getShortName());
+            FileUtils.copyDirectory(src.resolve(BASIS_DIRECTORY).toFile(), dest.toFile());
+
+            if (task != null && src.resolve(task).toFile().exists()) {
+                src = src.resolve(task);
+                if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
+                    src = src.resolve(DEFAULT_DIRECTORY);
+                }
+            } else if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
+                src = src.resolve(DEFAULT_DIRECTORY);
+            } else {
+                src = this.serverTemplatePath.resolve(DEFAULT_DIRECTORY);
+            }
+        } else {
+            src = src.resolve(DEFAULT_DIRECTORY);
+        }
+
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
     }
 

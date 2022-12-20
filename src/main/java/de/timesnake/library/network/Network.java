@@ -1,5 +1,5 @@
 /*
- * library-network.main
+ * workspace.library-network.main
  * Copyright (C) 2022 timesnake
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@ import java.util.UUID;
 public interface Network {
 
     String DEFAULT_DIRECTORY = "default";
+    String BASIS_DIRECTORY = "basis";
     String DEFAULT_PLAYER_DIRECTORY = "player_default";
     String PUBLIC_DIRECTORY = "public";
     String TEMPLATE_DIR_NAME = "templates";
