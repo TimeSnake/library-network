@@ -287,13 +287,15 @@ public class NetworkUtils implements Network {
 
         try {
             Files.createDirectories(dest);
-            Path src = this.serverTemplatePath.resolve(server.getType().getShortName())
+            Path src = this.serverTemplatePath
+                    .resolve(server.getType().getShortName())
                     .resolve(server.getTask())
-                    .resolve(owner).resolve(server.getFolderName());
+                    .resolve(owner)
+                    .resolve(server.getFolderName());
             this.createSymLinks(src, dest);
         } catch (IOException e) {
             e.printStackTrace();
-            return new ServerCreationResult.Fail("failed to create player-file links");
+            return new ServerCreationResult.Fail("failed to link server files");
         }
 
         try {
@@ -311,8 +313,9 @@ public class NetworkUtils implements Network {
         }
 
         try {
-            this.syncPlayerData(owner + "_" + server.getName(), server.getType(), server.getTask());
+            this.syncLogs(server.getName(), server.getType(), server.getTask());
         } catch (IOException e) {
+            e.printStackTrace();
             return new ServerCreationResult.Fail("failed to sync logs");
         }
 
