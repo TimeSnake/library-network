@@ -140,4 +140,8 @@ public class NetworkServer {
         this.simulationDistance = simulationDistance;
         return this;
     }
+
+    public enum CopyType {
+        NONE, COPY, SYNC
+    }
 }
