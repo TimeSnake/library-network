@@ -5,6 +5,7 @@
 package de.timesnake.library.network;
 
 import de.timesnake.database.util.object.Type;
+import de.timesnake.library.network.NetworkServer.CopyType;
 import freemarker.template.TemplateException;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -34,13 +35,20 @@ public interface Network {
     String OWN_SERVER_OWNER_UUID = "owner_uuid";
     String OWN_SERVER_MEMBER_UUIDS = "member_uuids";
 
-    ServerCreationResult createServer(NetworkServer server, boolean copyWorlds, boolean syncPlayerData);
+    ServerCreationResult createServer(NetworkServer server, CopyType copyType,
+            boolean syncPlayerData);
+
+    @Deprecated
+    ServerCreationResult createServer(NetworkServer server, boolean copyWorlds,
+            boolean syncPlayerData);
 
     void generateConfigurations(NetworkServer server) throws IOException, TemplateException;
 
     void copyServerBasis(String name, Type.Server<?> type, String task) throws IOException;
 
     void copyServerWorlds(String name, Type.Server<?> type, String task) throws IOException;
+
+    void syncServerWorlds(String name, Type.Server<?> type, String task) throws IOException;
 
     void syncLogs(String name, Type.Server<?> type, String task) throws IOException;
 
@@ -68,5 +76,6 @@ public interface Network {
 
     List<UUID> getPlayerServerMembers(UUID uuid, Type.Server<?> type, String task, String name);
 
-    boolean setPlayerServerMembers(UUID uuid, Type.Server<?> type, String task, String name, List<UUID> memberUuids);
+    boolean setPlayerServerMembers(UUID uuid, Type.Server<?> type, String task, String name,
+            List<UUID> memberUuids);
 }

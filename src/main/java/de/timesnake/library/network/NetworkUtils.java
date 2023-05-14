@@ -7,6 +7,7 @@ package de.timesnake.library.network;
 import com.moandjiezana.toml.Toml;
 import com.moandjiezana.toml.TomlWriter;
 import de.timesnake.database.util.object.Type;
+import de.timesnake.library.network.NetworkServer.CopyType;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -64,7 +65,7 @@ public class NetworkUtils implements Network {
     }
 
     @Override
-    public ServerCreationResult createServer(NetworkServer server, boolean copyWorlds,
+    public ServerCreationResult createServer(NetworkServer server, CopyType copyType,
             boolean syncPlayerData) {
         try {
             this.copyServerBasis(server.getName(), server.getType(), server.getTask());
@@ -73,12 +74,19 @@ public class NetworkUtils implements Network {
             return new ServerCreationResult.Fail("no server template found");
         }
 
-        if (copyWorlds) {
+        if (copyType == CopyType.COPY) {
             try {
                 this.copyServerWorlds(server.getName(), server.getType(), server.getTask());
             } catch (IOException e) {
                 e.printStackTrace();
-                return new ServerCreationResult.Fail("no worlds found");
+                return new ServerCreationResult.Fail("failed to copy worlds");
+            }
+        } else if (copyType == CopyType.SYNC) {
+            try {
+                this.syncServerWorlds(server.getName(), server.getType(), server.getTask());
+            } catch (IOException e) {
+                e.printStackTrace();
+                return new ServerCreationResult.Fail("failed to sync worlds");
             }
         }
 
@@ -107,6 +115,14 @@ public class NetworkUtils implements Network {
 
         return new ServerCreationResult.Successful(
                 this.networkPath.resolve(SERVERS).resolve(server.getName()));
+    }
+
+    @Deprecated
+    @Override
+    public ServerCreationResult createServer(NetworkServer server, boolean copyWorlds,
+            boolean syncPlayerData) {
+        return this.createServer(server, copyWorlds ? CopyType.COPY : CopyType.NONE,
+                syncPlayerData);
     }
 
     @Override
@@ -170,6 +186,20 @@ public class NetworkUtils implements Network {
         }
 
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
+    }
+
+    @Override
+    public void syncServerWorlds(String name, Type.Server<?> type, String task) throws IOException {
+        Path src = this.worldsTemplatePath.resolve(type.getShortName());
+        Path dest = this.networkPath.resolve(SERVERS).resolve(name);
+
+        if (task != null) {
+            src = src.resolve(task);
+        }
+
+        for (String worldName : this.getWorldNames(type, task)) {
+            Files.createSymbolicLink(dest.resolve(worldName), src.resolve(worldName));
+        }
     }
 
     @Override
