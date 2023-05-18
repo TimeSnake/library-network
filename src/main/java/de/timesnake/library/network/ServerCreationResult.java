@@ -8,41 +8,41 @@ import java.nio.file.Path;
 
 public interface ServerCreationResult {
 
-    boolean isSuccessful();
+  boolean isSuccessful();
 
-    class Successful implements ServerCreationResult {
+  class Successful implements ServerCreationResult {
 
-        private final Path serverPath;
+    private final Path serverPath;
 
-        public Successful(Path serverPath) {
-            this.serverPath = serverPath;
-        }
-
-        public Path getServerPath() {
-            return serverPath;
-        }
-
-        @Override
-        public boolean isSuccessful() {
-            return true;
-        }
+    public Successful(Path serverPath) {
+      this.serverPath = serverPath;
     }
 
-    class Fail implements ServerCreationResult {
-
-        private final String reason;
-
-        public Fail(String reason) {
-            this.reason = reason;
-        }
-
-        public String getReason() {
-            return reason;
-        }
-
-        @Override
-        public boolean isSuccessful() {
-            return false;
-        }
+    public Path getServerPath() {
+      return serverPath;
     }
+
+    @Override
+    public boolean isSuccessful() {
+      return true;
+    }
+  }
+
+  class Fail implements ServerCreationResult {
+
+    private final String reason;
+
+    public Fail(String reason) {
+      this.reason = reason;
+    }
+
+    public String getReason() {
+      return reason;
+    }
+
+    @Override
+    public boolean isSuccessful() {
+      return false;
+    }
+  }
 }
