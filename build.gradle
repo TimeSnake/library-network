@@ -1,31 +1,31 @@
 repositories {
-    mavenLocal()
-    maven {
-        name 'papermc'
-        url 'https://repo.papermc.io/repository/maven-public/'
-    }
-    maven {
-        url = uri 'https://repo.maven.apache.org/maven2/'
-    }
-    mavenCentral()
+  mavenLocal()
+  maven {
+    name 'papermc'
+    url 'https://repo.papermc.io/repository/maven-public/'
+  }
+  maven {
+    url = uri 'https://repo.maven.apache.org/maven2/'
+  }
+  mavenCentral()
 }
 
 dependencies {
-    implementation project.freemarker
-    implementation 'commons-io:commons-io:2.11.0'
+  implementation project.freemarker
+  implementation 'commons-io:commons-io:2.11.0'
 
-    compileOnly project(':database-proxy')
-    compileOnly project(':database-api')
+  compileOnly project(':database-proxy')
+  compileOnly project(':database-api')
 
-    compileOnly project(':channel-proxy')
-    compileOnly project(':channel-api')
+  compileOnly project(':channel-proxy')
+  compileOnly project(':channel-api')
 
-    compileOnly project(':library-extension')
-    compileOnly project(':library-basic')
-    compileOnly project(':library-chat')
+  compileOnly project(':library-extension')
+  compileOnly project(':library-basic')
+  compileOnly project(':library-chat')
 
-    compileOnly project.velocity
-    annotationProcessor project.velocity
+  compileOnly project.velocity
+  annotationProcessor project.velocity
 }
 
 group = project.group
@@ -33,21 +33,21 @@ version = '1.1-SNAPSHOT'
 archivesBaseName = 'library-network'
 
 publishing {
-    publications {
-        mavenJavaAll(MavenPublication) {
-            version version + '-all'
-            artifact {
-                file "build/libs/" + archivesBaseName + "-" + version + ".jar"
-            }
-        }
+  publications {
+    mavenJavaAll(MavenPublication) {
+      version version + '-all'
+      artifact {
+        file "build/libs/" + archivesBaseName + "-" + version + ".jar"
+      }
     }
+  }
 }
 
 task buildFatJar(type: Jar) {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    classifier = "all"
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  classifier = "all"
+  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+  with jar
 }
 
 jar.finalizedBy(buildFatJar)
