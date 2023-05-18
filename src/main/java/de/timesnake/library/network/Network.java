@@ -5,8 +5,9 @@
 package de.timesnake.library.network;
 
 import de.timesnake.database.util.object.Type;
-import de.timesnake.library.network.NetworkServer.CopyType;
+import de.timesnake.database.util.object.Type.Server;
 import freemarker.template.TemplateException;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -35,38 +36,37 @@ public interface Network {
     String OWN_SERVER_OWNER_UUID = "owner_uuid";
     String OWN_SERVER_MEMBER_UUIDS = "member_uuids";
 
-    ServerCreationResult createServer(NetworkServer server, CopyType copyType,
-            boolean syncPlayerData);
-
-    @Deprecated
-    ServerCreationResult createServer(NetworkServer server, boolean copyWorlds,
-            boolean syncPlayerData);
+    ServerCreationResult createServer(NetworkServer server);
 
     void generateConfigurations(NetworkServer server) throws IOException, TemplateException;
 
-    void copyServerBasis(String name, Type.Server<?> type, String task) throws IOException;
+    void copyServerFromTemplate(NetworkServerInfo info)
+            throws IOException;
 
-    void copyServerWorlds(String name, Type.Server<?> type, String task) throws IOException;
+    void copyServerWorlds(NetworkServerInfo info) throws IOException;
 
-    void syncServerWorlds(String name, Type.Server<?> type, String task) throws IOException;
+    void syncServerWorlds(NetworkServerInfo info) throws IOException;
 
-    void syncLogs(String name, Type.Server<?> type, String task) throws IOException;
+    void syncLogs(NetworkServerInfo info) throws IOException;
 
-    void syncPlayerData(String name, Type.Server<?> type, String task) throws IOException;
+    void syncPlayerData(NetworkServerInfo info) throws IOException;
 
-    WorldSyncResult syncWorld(NetworkServer server, String worldName);
+    WorldSyncResult syncWorld(NetworkServerInfo server, String worldName);
 
     WorldSyncResult exportAndSyncWorld(String serverName, String worldName, Path exportPath);
 
-    List<String> getWorldNames(Type.Server<?> type, String task);
+    List<String> getWorldNames(Server<?> type, String task);
+
+    List<File> getWorldFiles(Server<?> type, String task);
+
 
     ServerCreationResult createPublicPlayerServer(NetworkServer server);
 
     ServerCreationResult createPlayerServer(UUID uuid, NetworkServer server);
 
-    ServerInitResult initPublicPlayerServer(Type.Server<?> type, String task, String name);
+    ServerInitResult initNewPublicPlayerServer(Type.Server<?> type, String task, String name);
 
-    ServerInitResult initPlayerServer(UUID uuid, Type.Server<?> type, String task, String name);
+    ServerInitResult initNewPlayerServer(UUID uuid, Type.Server<?> type, String task, String name);
 
     List<String> getPublicPlayerServerNames(Type.Server<?> type, String task);
 

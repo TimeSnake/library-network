@@ -5,8 +5,9 @@
 package de.timesnake.library.network;
 
 import de.timesnake.database.util.object.Type;
+import java.util.function.Consumer;
 
-public class NetworkServer {
+public class NetworkServer extends NetworkServerInfo {
 
     public static final int DEFAULT_MAX_HEALTH = 2048;
     public static final int DEFAULT_MAX_PLAYERS = 100;
@@ -14,55 +15,37 @@ public class NetworkServer {
     public static final int DEFAULT_VIEW_DISTANCE = 10;
     public static final int DEFAULT_SIMULATION_DISTANCE = 10;
 
-    private final String name;
-    private final int port;
-    private final Type.Server<?> type;
-    private final String velocitySecret;
-    private String folderName;
-    private String task;
-    private int maxPlayers = DEFAULT_MAX_PLAYERS;
-    private int playerTrackingRange = DEFAULT_PLAYER_TRACKING_RANGE;
-    private int maxHealth = DEFAULT_MAX_HEALTH;
-    private boolean allowNether = false;
-    private boolean allowEnd = false;
-    private int viewDistance = DEFAULT_VIEW_DISTANCE;
-    private int simulationDistance = DEFAULT_SIMULATION_DISTANCE;
+    protected final int port;
+    protected String velocitySecret;
+    protected int maxPlayers = DEFAULT_MAX_PLAYERS;
+    protected int playerTrackingRange = DEFAULT_PLAYER_TRACKING_RANGE;
+    protected int maxHealth = DEFAULT_MAX_HEALTH;
+    protected boolean allowNether = false;
+    protected boolean allowEnd = false;
+    protected int viewDistance = DEFAULT_VIEW_DISTANCE;
+    protected int simulationDistance = DEFAULT_SIMULATION_DISTANCE;
 
-    public NetworkServer(String name, int port, Type.Server<?> type, String velocitySecret) {
-        this.name = name;
-        this.folderName = name;
+    private final Options options = new Options();
+
+    public NetworkServer(String name, int port, Type.Server<?> type) {
+        super(name, type);
         this.port = port;
-        this.type = type;
-        this.velocitySecret = velocitySecret;
     }
 
-    public String getName() {
-        return name;
+    public NetworkServer setFolderName(String name) {
+        return ((NetworkServer) super.setFolderName(name));
+    }
+
+    public NetworkServer setTask(String task) {
+        return ((NetworkServer) super.setTask(task));
     }
 
     public int getPort() {
         return port;
     }
 
-    public Type.Server<?> getType() {
-        return type;
-    }
-
-    public String getFolderName() {
-        return folderName;
-    }
-
-    public NetworkServer setFolderName(String name) {
-        this.folderName = name;
-        return this;
-    }
-
-    public String getTask() {
-        return task;
-    }
-
-    public NetworkServer setTask(String task) {
-        this.task = task;
+    public NetworkServer setVelocitySecret(String velocitySecret) {
+        this.velocitySecret = velocitySecret;
         return this;
     }
 
@@ -141,7 +124,54 @@ public class NetworkServer {
         return this;
     }
 
+    public NetworkServer options(Consumer<Options> optionsConsumer) {
+        optionsConsumer.accept(this.options);
+        return this;
+    }
+
+    public Options getOptions() {
+        return options;
+    }
+
     public enum CopyType {
         NONE, COPY, SYNC
+    }
+
+    public static class Options {
+
+        private CopyType worldCopyType = CopyType.NONE;
+        private boolean syncPlayerData = false;
+        private boolean syncLogs = true;
+
+        public Options() {
+
+        }
+
+        public Options setWorldCopyType(CopyType copyType) {
+            this.worldCopyType = copyType;
+            return this;
+        }
+
+        public CopyType getWorldCopyType() {
+            return worldCopyType;
+        }
+
+        public Options setSyncPlayerData(boolean syncPlayerData) {
+            this.syncPlayerData = syncPlayerData;
+            return this;
+        }
+
+        public boolean isSyncPlayerData() {
+            return syncPlayerData;
+        }
+
+        public Options setSyncLogs(boolean syncLogs) {
+            this.syncLogs = syncLogs;
+            return this;
+        }
+
+        public boolean isSyncLogs() {
+            return syncLogs;
+        }
     }
 }

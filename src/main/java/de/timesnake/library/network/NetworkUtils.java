@@ -7,7 +7,9 @@ package de.timesnake.library.network;
 import com.moandjiezana.toml.Toml;
 import com.moandjiezana.toml.TomlWriter;
 import de.timesnake.database.util.object.Type;
+import de.timesnake.database.util.object.Type.Server;
 import de.timesnake.library.network.NetworkServer.CopyType;
+import de.timesnake.library.network.NetworkServer.Options;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -20,6 +22,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -65,25 +68,26 @@ public class NetworkUtils implements Network {
     }
 
     @Override
-    public ServerCreationResult createServer(NetworkServer server, CopyType copyType,
-            boolean syncPlayerData) {
+    public ServerCreationResult createServer(NetworkServer server) {
+        Options options = server.getOptions();
+
         try {
-            this.copyServerBasis(server.getName(), server.getType(), server.getTask());
+            this.copyServerFromTemplate(server);
         } catch (IOException e) {
             e.printStackTrace();
             return new ServerCreationResult.Fail("no server template found");
         }
 
-        if (copyType == CopyType.COPY) {
+        if (options.getWorldCopyType() == CopyType.COPY) {
             try {
-                this.copyServerWorlds(server.getName(), server.getType(), server.getTask());
+                this.copyServerWorlds(server);
             } catch (IOException e) {
                 e.printStackTrace();
                 return new ServerCreationResult.Fail("failed to copy worlds");
             }
-        } else if (copyType == CopyType.SYNC) {
+        } else if (options.getWorldCopyType() == CopyType.SYNC) {
             try {
-                this.syncServerWorlds(server.getName(), server.getType(), server.getTask());
+                this.syncServerWorlds(server);
             } catch (IOException e) {
                 e.printStackTrace();
                 return new ServerCreationResult.Fail("failed to sync worlds");
@@ -97,32 +101,26 @@ public class NetworkUtils implements Network {
             return new ServerCreationResult.Fail("failed to generate config files");
         }
 
-        if (syncPlayerData) {
+        if (options.isSyncPlayerData()) {
             try {
-                this.syncPlayerData(server.getName(), server.getType(), server.getTask());
+                this.syncPlayerData(server);
             } catch (IOException e) {
                 e.printStackTrace();
                 return new ServerCreationResult.Fail("failed to sync player data");
             }
         }
 
-        try {
-            this.syncLogs(server.getName(), server.getType(), server.getTask());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ServerCreationResult.Fail("failed to sync logs");
+        if (options.isSyncLogs()) {
+            try {
+                this.syncLogs(server);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return new ServerCreationResult.Fail("failed to sync logs");
+            }
         }
 
         return new ServerCreationResult.Successful(
                 this.networkPath.resolve(SERVERS).resolve(server.getName()));
-    }
-
-    @Deprecated
-    @Override
-    public ServerCreationResult createServer(NetworkServer server, boolean copyWorlds,
-            boolean syncPlayerData) {
-        return this.createServer(server, copyWorlds ? CopyType.COPY : CopyType.NONE,
-                syncPlayerData);
     }
 
     @Override
@@ -170,49 +168,35 @@ public class NetworkUtils implements Network {
     }
 
     @Override
-    public void copyServerBasis(String serverName, Type.Server<?> type, String task)
-            throws IOException {
-        Path dest = this.networkPath.resolve(SERVERS).resolve(serverName);
-        this.copyServerFromTemplate(type, task, dest);
-    }
+    public void copyServerWorlds(NetworkServerInfo info) throws IOException {
+        Path src = this.worldsTemplatePath.resolve(info.getType().getShortName());
+        Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName());
 
-    @Override
-    public void copyServerWorlds(String name, Type.Server<?> type, String task) throws IOException {
-        Path src = this.worldsTemplatePath.resolve(type.getShortName());
-        Path dest = this.networkPath.resolve(SERVERS).resolve(name);
-
-        if (task != null) {
-            src = src.resolve(task);
+        if (info.getTask() != null) {
+            src = src.resolve(info.getTask());
         }
 
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
     }
 
     @Override
-    public void syncServerWorlds(String name, Type.Server<?> type, String task) throws IOException {
-        Path src = this.worldsTemplatePath.resolve(type.getShortName());
-        Path dest = this.networkPath.resolve(SERVERS).resolve(name);
-
-        if (task != null) {
-            src = src.resolve(task);
-        }
-
-        for (String worldName : this.getWorldNames(type, task)) {
-            Files.createSymbolicLink(dest.resolve(worldName), src.resolve(worldName));
+    public void syncServerWorlds(NetworkServerInfo info) throws IOException {
+        for (String worldName : this.getWorldNames(info.getType(), info.getTask())) {
+            this.syncWorld(info, worldName);
         }
     }
 
     @Override
-    public void syncLogs(String name, Type.Server<?> type, String task) throws IOException {
-        Path src = this.logsPath.resolve(type.getShortName());
+    public void syncLogs(NetworkServerInfo info) throws IOException {
+        Path src = this.logsPath.resolve(info.getType().getShortName());
 
-        if (task != null) {
-            src = src.resolve(task);
+        if (info.getTask() != null) {
+            src = src.resolve(info.getTask());
         }
 
-        src = src.resolve(name).resolve(DATE_FORMAT.format(new Date()));
+        src = src.resolve(info.getName()).resolve(DATE_FORMAT.format(new Date()));
 
-        Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve("logs");
+        Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName()).resolve("logs");
 
         if (dest.toFile().exists()) {
             dest.toFile().delete();
@@ -224,12 +208,13 @@ public class NetworkUtils implements Network {
     }
 
     @Override
-    public void syncPlayerData(String name, Type.Server<?> type, String task) throws IOException {
-        Path src = this.resolveTemplatePath(this.playersTemplatePath, type, task,
+    public void syncPlayerData(NetworkServerInfo info) throws IOException {
+        Path src = NetworkFileUtils.resolveTemplatePath(this.playersTemplatePath, info.getType(),
+                info.getTask(),
                 DEFAULT_DIRECTORY);
 
         src = src.resolve(PLAYER_DATA);
-        Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve("world")
+        Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName()).resolve("world")
                 .resolve("playerdata");
 
         if (dest.toFile().exists()) {
@@ -241,13 +226,13 @@ public class NetworkUtils implements Network {
     }
 
     @Override
-    public WorldSyncResult syncWorld(NetworkServer server, String worldName) {
+    public WorldSyncResult syncWorld(NetworkServerInfo server, String worldName) {
 
         String name = server.getName();
         Type.Server<?> type = server.getType();
         String task = server.getTask();
 
-        Path src = this.resolveTemplatePath(this.worldsTemplatePath, type, task, DEFAULT_DIRECTORY);
+        Path src = NetworkFileUtils.resolveWorldTemplatePath(this.worldsTemplatePath, type, task);
 
         src = src.resolve(worldName);
         Path dest = this.networkPath.resolve(SERVERS).resolve(name).resolve(worldName);
@@ -297,9 +282,17 @@ public class NetworkUtils implements Network {
     }
 
     @Override
-    public List<String> getWorldNames(Type.Server<?> type, String task) {
-        Path src = this.resolveTemplatePath(this.worldsTemplatePath, type, task, DEFAULT_DIRECTORY);
-        return List.of(src.toFile().list());
+    public List<String> getWorldNames(Server<?> type, String task) {
+        Path src = NetworkFileUtils.resolveWorldTemplatePath(this.worldsTemplatePath, type, task);
+        String[] names = src.toFile().list();
+        return names != null ? Arrays.asList(names) : List.of();
+    }
+
+    @Override
+    public List<File> getWorldFiles(Server<?> type, String task) {
+        Path src = NetworkFileUtils.resolveWorldTemplatePath(this.worldsTemplatePath, type, task);
+        File[] files = src.toFile().listFiles();
+        return files != null ? Arrays.asList(files) : List.of();
     }
 
     @Override
@@ -322,14 +315,14 @@ public class NetworkUtils implements Network {
                     .resolve(server.getTask())
                     .resolve(owner)
                     .resolve(server.getFolderName());
-            this.createSymLinks(src, dest);
+            NetworkFileUtils.createSymLinks(src, dest);
         } catch (IOException e) {
             e.printStackTrace();
             return new ServerCreationResult.Fail("failed to link server files");
         }
 
         try {
-            this.copyServerBasis(server.getName(), server.getType(), server.getTask());
+            this.copyServerFromTemplate(server);
         } catch (IOException e) {
             e.printStackTrace();
             return new ServerCreationResult.Fail("no server template found");
@@ -343,7 +336,7 @@ public class NetworkUtils implements Network {
         }
 
         try {
-            this.syncLogs(server.getName(), server.getType(), server.getTask());
+            this.syncLogs(server);
         } catch (IOException e) {
             e.printStackTrace();
             return new ServerCreationResult.Fail("failed to sync logs");
@@ -353,17 +346,18 @@ public class NetworkUtils implements Network {
     }
 
     @Override
-    public ServerInitResult initPublicPlayerServer(Type.Server<?> type, String task, String name) {
-        return this.initPlayerServer(DEFAULT_DIRECTORY, type, task, name);
+    public ServerInitResult initNewPublicPlayerServer(Type.Server<?> type, String task,
+            String name) {
+        return this.initNewPlayerServer(DEFAULT_DIRECTORY, type, task, name);
     }
 
     @Override
-    public ServerInitResult initPlayerServer(UUID uuid, Type.Server<?> type, String task,
+    public ServerInitResult initNewPlayerServer(UUID uuid, Type.Server<?> type, String task,
             String name) {
         Path dest = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
                 .resolve(uuid.toString()).resolve(name);
 
-        ServerInitResult result = this.initPlayerServer(uuid.toString(), type, task, name);
+        ServerInitResult result = this.initNewPlayerServer(uuid.toString(), type, task, name);
 
         if (!result.isSuccessful()) {
             return result;
@@ -392,7 +386,7 @@ public class NetworkUtils implements Network {
         return new ServerInitResult.Successful(dest);
     }
 
-    private ServerInitResult initPlayerServer(String owner, Type.Server<?> type, String task,
+    private ServerInitResult initNewPlayerServer(String owner, Type.Server<?> type, String task,
             String name) {
         Path dest = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
                 .resolve(owner).resolve(name);
@@ -548,6 +542,13 @@ public class NetworkUtils implements Network {
         return true;
     }
 
+    @Override
+    public void copyServerFromTemplate(NetworkServerInfo info)
+            throws IOException {
+        Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName());
+        this.copyServerFromTemplate(info.getType(), info.getTask(), dest);
+    }
+
     private void copyServerFromTemplate(Type.Server<?> type, String task, Path dest)
             throws IOException {
         Path src = this.serverTemplatePath.toAbsolutePath();
@@ -581,40 +582,9 @@ public class NetworkUtils implements Network {
 
     private void copyServerFromPlayerTemplate(Type.Server<?> type, String task, Path dest)
             throws IOException {
-        Path src = this.resolveTemplatePath(this.serverTemplatePath, type, task,
+        Path src = NetworkFileUtils.resolveTemplatePath(this.serverTemplatePath, type, task,
                 DEFAULT_PLAYER_DIRECTORY);
         FileUtils.copyDirectory(src.toFile(), dest.toFile());
     }
 
-    private void createSymLinks(Path src, Path dest) throws IOException {
-        String[] fileNames = src.toFile().list();
-        this.createSymLinks(src, fileNames != null ? List.of(fileNames) : List.of(), dest);
-    }
-
-    private void createSymLinks(Path src, List<String> files, Path dest) throws IOException {
-        for (String fileName : files) {
-            Files.createSymbolicLink(dest.resolve(fileName), src.resolve(fileName));
-        }
-    }
-
-    private Path resolveTemplatePath(Path base, Type.Server<?> type, String task,
-            String defaultDir) {
-        Path path = base.toAbsolutePath();
-        if (path.resolve(type.getShortName()).toFile().exists()) {
-            path = path.resolve(type.getShortName());
-            if (task != null && path.resolve(task).toFile().exists()) {
-                path = path.resolve(task);
-                if (path.resolve(defaultDir).toFile().exists()) {
-                    path = path.resolve(defaultDir);
-                }
-            } else if (path.resolve(defaultDir).toFile().exists()) {
-                path = path.resolve(defaultDir);
-            } else {
-                path = base.resolve(defaultDir);
-            }
-        } else {
-            path = path.resolve(defaultDir);
-        }
-        return path;
-    }
 }
