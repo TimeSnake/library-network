@@ -1,5 +1,11 @@
+group = project.group
+version = '1.1-SNAPSHOT'
+archivesBaseName = 'library-network'
+var projectId = 37
+
 repositories {
   mavenLocal()
+  mavenCentral()
   maven {
     name 'papermc'
     url 'https://repo.papermc.io/repository/maven-public/'
@@ -28,10 +34,6 @@ dependencies {
   annotationProcessor project.velocity
 }
 
-group = project.group
-version = '1.1-SNAPSHOT'
-archivesBaseName = 'library-network'
-
 publishing {
   publications {
     mavenJavaAll(MavenPublication) {
@@ -51,3 +53,15 @@ task buildFatJar(type: Jar) {
 }
 
 jar.finalizedBy(buildFatJar)
+
+publishing {
+  repositories {
+    maven {
+      url getDeployUrl(projectId)
+      credentials {
+        username = deploy_token_name
+        password = deploy_token_key
+      }
+    }
+  }
+}
