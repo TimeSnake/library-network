@@ -1,6 +1,10 @@
+plugins {
+  id 'java-library'
+  id 'maven-publish'
+}
+
 group = project.group
-version = '1.1-SNAPSHOT'
-archivesBaseName = 'library-network'
+version = '1-1.0'
 var projectId = 37
 
 repositories {
@@ -10,17 +14,12 @@ repositories {
     name 'papermc'
     url 'https://repo.papermc.io/repository/maven-public/'
   }
-  maven {
-    url = uri 'https://repo.maven.apache.org/maven2/'
-  }
-  mavenCentral()
 }
 
 dependencies {
   implementation project.freemarker
   implementation 'commons-io:commons-io:2.11.0'
 
-  compileOnly project(':database-proxy')
   compileOnly project(':database-api')
 
   compileOnly project(':channel-proxy')
@@ -30,29 +29,8 @@ dependencies {
   compileOnly project(':library-basic')
   compileOnly project(':library-chat')
 
-  compileOnly project.velocity
-  annotationProcessor project.velocity
+  compileOnly project.toml
 }
-
-publishing {
-  publications {
-    mavenJavaAll(MavenPublication) {
-      version version + '-all'
-      artifact {
-        file "build/libs/" + archivesBaseName + "-" + version + ".jar"
-      }
-    }
-  }
-}
-
-task buildFatJar(type: Jar) {
-  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-  classifier = "all"
-  from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-  with jar
-}
-
-jar.finalizedBy(buildFatJar)
 
 publishing {
   repositories {
