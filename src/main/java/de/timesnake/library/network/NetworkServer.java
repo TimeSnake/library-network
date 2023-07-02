@@ -5,6 +5,7 @@
 package de.timesnake.library.network;
 
 import de.timesnake.database.util.object.Type;
+
 import java.util.function.Consumer;
 
 public class NetworkServer extends NetworkServerInfo {
@@ -15,8 +16,22 @@ public class NetworkServer extends NetworkServerInfo {
   public static final int DEFAULT_VIEW_DISTANCE = 10;
   public static final int DEFAULT_SIMULATION_DISTANCE = 10;
 
+  public static int DEFAULT_CHANNEL_PORT_OFFSET = 10000;
+  public static int DEFAULT_CHANNEL_PROXY_PORT = 35565;
+  public static String DEFAULT_HOST_NAME = "127.0.0.1";
+  public static String DEFAULT_PROXY_HOST_NAME = "127.0.0.1";
+  public static String DEFAULT_PROXY_SERVER_NAME = "proxy";
+  public static String DEFAULT_LISTEN_HOST_NAME = "0.0.0.0";
+
   protected final int port;
   protected String velocitySecret;
+  protected String channelHostName = DEFAULT_HOST_NAME;
+  protected String channelListenHostName = DEFAULT_LISTEN_HOST_NAME;
+  protected String channelProxyHostName = DEFAULT_PROXY_HOST_NAME;
+  protected String channelProxyServerName = DEFAULT_PROXY_SERVER_NAME;
+  protected int channelPortOffset = DEFAULT_CHANNEL_PORT_OFFSET;
+  protected int channelProxyPort = DEFAULT_CHANNEL_PROXY_PORT;
+
   protected int maxPlayers = DEFAULT_MAX_PLAYERS;
   protected int playerTrackingRange = DEFAULT_PLAYER_TRACKING_RANGE;
   protected int maxHealth = DEFAULT_MAX_HEALTH;
@@ -124,6 +139,60 @@ public class NetworkServer extends NetworkServerInfo {
     return this;
   }
 
+  public String getChannelHostName() {
+    return channelHostName;
+  }
+
+  public NetworkServer setChannelHostName(String channelHostName) {
+    this.channelHostName = channelHostName;
+    return this;
+  }
+
+  public String getChannelProxyHostName() {
+    return channelProxyHostName;
+  }
+
+  public NetworkServer setChannelProxyHostName(String channelProxyHostName) {
+    this.channelProxyHostName = channelProxyHostName;
+    return this;
+  }
+
+  public int getChannelPortOffset() {
+    return channelPortOffset;
+  }
+
+  public NetworkServer setChannelPortOffset(int channelPortOffset) {
+    this.channelPortOffset = channelPortOffset;
+    return this;
+  }
+
+  public int getChannelProxyPort() {
+    return channelProxyPort;
+  }
+
+  public NetworkServer setChannelProxyPort(int channelProxyPort) {
+    this.channelProxyPort = channelProxyPort;
+    return this;
+  }
+
+  public String getChannelListenHostName() {
+    return channelListenHostName;
+  }
+
+  public NetworkServer setChannelListenHostName(String channelListenHostName) {
+    this.channelListenHostName = channelListenHostName;
+    return this;
+  }
+
+  public String getChannelProxyServerName() {
+    return channelProxyServerName;
+  }
+
+  public NetworkServer setChannelProxyServerName(String channelProxyServerName) {
+    this.channelProxyServerName = channelProxyServerName;
+    return this;
+  }
+
   public NetworkServer options(Consumer<Options> optionsConsumer) {
     optionsConsumer.accept(this.options);
     return this;
@@ -156,6 +225,7 @@ public class NetworkServer extends NetworkServerInfo {
       return worldCopyType;
     }
 
+    @Deprecated
     public Options setSyncPlayerData(boolean syncPlayerData) {
       this.syncPlayerData = syncPlayerData;
       return this;

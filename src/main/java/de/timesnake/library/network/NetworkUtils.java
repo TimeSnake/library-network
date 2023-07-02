@@ -14,22 +14,13 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import org.apache.commons.io.FileUtils;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import org.apache.commons.io.FileUtils;
+import java.util.*;
 
 public class NetworkUtils implements Network {
 
@@ -102,12 +93,13 @@ public class NetworkUtils implements Network {
     }
 
     if (options.isSyncPlayerData()) {
-      try {
-        this.syncPlayerData(server);
-      } catch (IOException e) {
-        e.printStackTrace();
-        return new ServerCreationResult.Fail("failed to sync player data");
-      }
+      // TODO fix for 1.20.1
+      // try {
+      //   this.syncPlayerData(server);
+      // } catch (IOException e) {
+      //   e.printStackTrace();
+      //   return new ServerCreationResult.Fail("failed to sync player data");
+      // }
     }
 
     if (options.isSyncLogs()) {
@@ -129,16 +121,19 @@ public class NetworkUtils implements Network {
     Template paperGlobal = cfg.getTemplate("paper-global.yml.ftl");
     Template spigot = cfg.getTemplate("spigot.yml.ftl");
     Template bukkit = cfg.getTemplate("bukkit.yml.ftl");
+    Template channel = cfg.getTemplate("channel_config.toml.ftl");
 
     Map<String, Object> rootServerProperties = new HashMap<>();
     Map<String, Object> rootPaperGlobal = new HashMap<>();
     Map<String, Object> rootSpigot = new HashMap<>();
     Map<String, Object> rootBukkit = new HashMap<>();
+    Map<String, Object> rootChannel = new HashMap<>();
 
     rootServerProperties.put("server", server);
     rootPaperGlobal.put("server", server);
     rootSpigot.put("server", server);
     rootBukkit.put("server", server);
+    rootChannel.put("server", server);
 
     Writer outServerProperties = new OutputStreamWriter(
         new FileOutputStream(this.networkPath.resolve(SERVERS)
@@ -156,15 +151,21 @@ public class NetworkUtils implements Network {
         new FileOutputStream(this.networkPath.resolve(SERVERS)
             .resolve(server.getName()).resolve("bukkit.yml").toFile()));
 
+    Writer outChannel = new OutputStreamWriter(
+        new FileOutputStream(this.networkPath.resolve(SERVERS)
+            .resolve(server.getName()).resolve("plugins").resolve("channel").resolve("config.toml").toFile()));
+
     serverProperties.process(rootServerProperties, outServerProperties);
     paperGlobal.process(rootPaperGlobal, outPaperGlobal);
     spigot.process(rootSpigot, outSpigot);
     bukkit.process(rootBukkit, outBukkit);
+    channel.process(rootChannel, outChannel);
 
     outServerProperties.close();
     outPaperGlobal.close();
     outSpigot.close();
     outBukkit.close();
+    outChannel.close();
   }
 
   @Override
@@ -258,7 +259,7 @@ public class NetworkUtils implements Network {
 
   @Override
   public WorldSyncResult exportAndSyncWorld(String serverName, String worldName,
-      Path exportPath) {
+                                            Path exportPath) {
 
     Path src = this.networkPath.resolve(SERVERS).resolve(serverName).resolve(worldName);
     Path dest = this.worldsTemplatePath.resolve(exportPath).resolve(worldName);
@@ -347,13 +348,13 @@ public class NetworkUtils implements Network {
 
   @Override
   public ServerInitResult initNewPublicPlayerServer(Type.Server<?> type, String task,
-      String name) {
+                                                    String name) {
     return this.initNewPlayerServer(DEFAULT_DIRECTORY, type, task, name);
   }
 
   @Override
   public ServerInitResult initNewPlayerServer(UUID uuid, Type.Server<?> type, String task,
-      String name) {
+                                              String name) {
     Path dest = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
         .resolve(uuid.toString()).resolve(name);
 
@@ -387,7 +388,7 @@ public class NetworkUtils implements Network {
   }
 
   private ServerInitResult initNewPlayerServer(String owner, Type.Server<?> type, String task,
-      String name) {
+                                               String name) {
     Path dest = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
         .resolve(owner).resolve(name);
 
@@ -423,7 +424,7 @@ public class NetworkUtils implements Network {
 
   @Override
   public Map<UUID, List<String>> getMemberServerNames(UUID member, Type.Server<?> type,
-      String task) {
+                                                      String task) {
     Path src = this.serverTemplatePath.resolve(type.getShortName()).resolve(task);
 
     HashMap<UUID, List<String>> serverNamesByOwnerUuid = new HashMap<>();
@@ -486,7 +487,7 @@ public class NetworkUtils implements Network {
 
   @Override
   public List<UUID> getPlayerServerMembers(UUID uuid, Type.Server<?> type, String task,
-      String exactName) {
+                                           String exactName) {
     File config = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
         .resolve(uuid.toString()).resolve(exactName).resolve(OWN_SERVER_INFO_FILE_NAME)
         .toFile();
@@ -509,7 +510,7 @@ public class NetworkUtils implements Network {
 
   @Override
   public boolean setPlayerServerMembers(UUID uuid, Type.Server<?> type, String task,
-      String exactName, List<UUID> memberUuids) {
+                                        String exactName, List<UUID> memberUuids) {
     Path path;
     try {
       path = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
