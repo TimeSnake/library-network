@@ -349,7 +349,7 @@ public class NetworkUtils implements Network {
   @Override
   public ServerInitResult initNewPublicPlayerServer(Type.Server<?> type, String task,
                                                     String name) {
-    return this.initNewPlayerServer(DEFAULT_DIRECTORY, type, task, name);
+    return this.initNewPlayerServer(PUBLIC_DIRECTORY, type, task, name);
   }
 
   @Override
