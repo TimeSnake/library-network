@@ -16,21 +16,14 @@ public class NetworkServer extends NetworkServerInfo {
   public static final int DEFAULT_VIEW_DISTANCE = 10;
   public static final int DEFAULT_SIMULATION_DISTANCE = 10;
 
-  public static int DEFAULT_CHANNEL_PORT_OFFSET = 10000;
-  public static int DEFAULT_CHANNEL_PROXY_PORT = 35565;
-  public static String DEFAULT_HOST_NAME = "127.0.0.1";
-  public static String DEFAULT_PROXY_HOST_NAME = "127.0.0.1";
-  public static String DEFAULT_PROXY_SERVER_NAME = "proxy";
-  public static String DEFAULT_LISTEN_HOST_NAME = "0.0.0.0";
-
   protected final int port;
   protected String velocitySecret;
-  protected String channelHostName = DEFAULT_HOST_NAME;
-  protected String channelListenHostName = DEFAULT_LISTEN_HOST_NAME;
-  protected String channelProxyHostName = DEFAULT_PROXY_HOST_NAME;
-  protected String channelProxyServerName = DEFAULT_PROXY_SERVER_NAME;
-  protected int channelPortOffset = DEFAULT_CHANNEL_PORT_OFFSET;
-  protected int channelProxyPort = DEFAULT_CHANNEL_PROXY_PORT;
+  protected String channelHostName;
+  protected String channelListenHostName;
+  protected String channelProxyHostName;
+  protected String channelProxyServerName;
+  protected int channelPortOffset;
+  protected int channelProxyPort;
 
   protected int maxPlayers = DEFAULT_MAX_PLAYERS;
   protected int playerTrackingRange = DEFAULT_PLAYER_TRACKING_RANGE;
