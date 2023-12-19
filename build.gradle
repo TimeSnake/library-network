@@ -3,7 +3,7 @@ plugins {
   id 'maven-publish'
 }
 
-group = project.group
+group = "de.timesnake"
 version = '1.3'
 var projectId = 37
 
@@ -11,36 +11,58 @@ repositories {
   mavenLocal()
   mavenCentral()
   maven {
-    name 'papermc'
     url 'https://repo.papermc.io/repository/maven-public/'
+  }
+  maven {
+    url "https://git.timesnake.de/api/v4/groups/7/-/packages/maven"
+    name "TimeSnake"
+    credentials {
+      username = timesnakeUser
+      password = timesnakePassword
+    }
   }
 }
 
 dependencies {
-  implementation project.freemarker
+  implementation "org.freemarker:freemarker:2.3.31"
   implementation 'commons-io:commons-io:2.11.0'
 
-  compileOnly project(':database-api')
+  compileOnly "de.timesnake:database-proxy:2.2.1"
+  compileOnly "de.timesnake:database-api:2.2.1"
 
-  compileOnly project(':channel-proxy')
-  compileOnly project(':channel-api')
+  compileOnly "de.timesnake:channel-proxy:3.0.5"
+  compileOnly "de.timesnake:channel-api:3.0.5"
 
-  compileOnly project(':library-extension')
-  compileOnly project(':library-basic')
-  compileOnly project(':library-chat')
+  compileOnly "de.timesnake:library-extension:1.2"
+  compileOnly "de.timesnake:library-basic:1.2.2"
+  compileOnly "de.timesnake:library-chat:1.1"
 
-  compileOnly project.toml
+  compileOnly "com.moandjiezana.toml:toml4j:0.7.3-SNAPSHOT"
+}
+
+configurations.configureEach {
+  resolutionStrategy.dependencySubstitution {
+    substitute module("de.timesnake:database-proxy") using project(":database-proxy")
+    substitute module("de.timesnake:database-api") using project(":database-api")
+    substitute module("de.timesnake:channel-proxy") using project(":channel-proxy")
+    substitute module("de.timesnake:channel-api") using project(":channel-api")
+    substitute module("de.timesnake:library-extension") using project(":library-extension")
+    substitute module("de.timesnake:library-basic") using project(":library-basic")
+    substitute module("de.timesnake:library-chat") using project(":library-chat")
+  }
 }
 
 publishing {
   repositories {
     maven {
       url "https://git.timesnake.de/api/v4/projects/" + projectId + "/packages/maven"
-      credentials {
-        username = timesnakeDeployUser
-        password = timesnakeDeployKey
+      credentials(HttpHeaderCredentials) {
+        name = "Job-Token"
+        value = System.getenv("CI_JOB_TOKEN")
       }
-
+      authentication {
+        header(HttpHeaderAuthentication)
+      }
     }
   }
 
