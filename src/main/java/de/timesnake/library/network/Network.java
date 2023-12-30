@@ -4,9 +4,9 @@
 
 package de.timesnake.library.network;
 
-import de.timesnake.database.util.object.Type;
-import de.timesnake.database.util.object.Type.Server;
+import de.timesnake.library.basic.util.ServerType;
 import freemarker.template.TemplateException;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,8 +40,7 @@ public interface Network {
 
   void generateConfigurations(NetworkServer server) throws IOException, TemplateException;
 
-  void copyServerFromTemplate(NetworkServerInfo info)
-      throws IOException;
+  void copyServerFromTemplate(NetworkServerInfo info) throws IOException;
 
   void copyServerWorlds(NetworkServerInfo info) throws IOException;
 
@@ -55,27 +54,25 @@ public interface Network {
 
   WorldSyncResult exportAndSyncWorld(String serverName, String worldName, Path exportPath);
 
-  List<String> getWorldNames(Server<?> type, String task);
+  List<String> getWorldNames(ServerType type, String task);
 
-  List<File> getWorldFiles(Server<?> type, String task);
-
+  List<File> getWorldFiles(ServerType type, String task);
 
   ServerCreationResult createPublicPlayerServer(NetworkServer server);
 
   ServerCreationResult createPlayerServer(UUID uuid, NetworkServer server);
 
-  ServerInitResult initNewPublicPlayerServer(Type.Server<?> type, String task, String name);
+  ServerInitResult initNewPublicPlayerServer(ServerType type, String task, String name);
 
-  ServerInitResult initNewPlayerServer(UUID uuid, Type.Server<?> type, String task, String name);
+  ServerInitResult initNewPlayerServer(UUID uuid, ServerType type, String task, String name);
 
-  List<String> getPublicPlayerServerNames(Type.Server<?> type, String task);
+  List<String> getPublicPlayerServerNames(ServerType type, String task);
 
-  List<String> getOwnerServerNames(UUID uuid, Type.Server<?> type, String task);
+  List<String> getOwnerServerNames(UUID uuid, ServerType type, String task);
 
-  Map<UUID, List<String>> getMemberServerNames(UUID member, Type.Server<?> type, String task);
+  Map<UUID, List<String>> getMemberServerNames(UUID member, ServerType type, String task);
 
-  List<UUID> getPlayerServerMembers(UUID uuid, Type.Server<?> type, String task, String name);
+  List<UUID> getPlayerServerMembers(UUID uuid, ServerType type, String task, String name);
 
-  boolean setPlayerServerMembers(UUID uuid, Type.Server<?> type, String task, String name,
-      List<UUID> memberUuids);
+  boolean setPlayerServerMembers(UUID uuid, ServerType type, String task, String name, List<UUID> memberUuids);
 }

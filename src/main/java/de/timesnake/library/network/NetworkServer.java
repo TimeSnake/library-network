@@ -4,7 +4,7 @@
 
 package de.timesnake.library.network;
 
-import de.timesnake.database.util.object.Type;
+import de.timesnake.library.basic.util.ServerType;
 
 import java.util.function.Consumer;
 
@@ -35,7 +35,7 @@ public class NetworkServer extends NetworkServerInfo {
 
   private final Options options = new Options();
 
-  public NetworkServer(String name, int port, Type.Server<?> type) {
+  public NetworkServer(String name, int port, ServerType type) {
     super(name, type);
     this.port = port;
   }

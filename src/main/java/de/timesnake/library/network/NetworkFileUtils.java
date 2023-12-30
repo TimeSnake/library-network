@@ -4,7 +4,8 @@
 
 package de.timesnake.library.network;
 
-import de.timesnake.database.util.object.Type;
+import de.timesnake.library.basic.util.ServerType;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,8 +24,8 @@ public class NetworkFileUtils {
     }
   }
 
-  public static Path resolveTemplatePath(Path base, Type.Server<?> type, String task,
-      String defaultDir) {
+  public static Path resolveTemplatePath(Path base, ServerType type, String task,
+                                         String defaultDir) {
     Path path = base.toAbsolutePath();
     if (path.resolve(type.getShortName()).toFile().exists()) {
       path = path.resolve(type.getShortName());
@@ -44,7 +45,7 @@ public class NetworkFileUtils {
     return path;
   }
 
-  public static Path resolveWorldTemplatePath(Path base, Type.Server<?> type, String task) {
+  public static Path resolveWorldTemplatePath(Path base, ServerType type, String task) {
     Path path = base.toAbsolutePath();
     if (path.resolve(type.getShortName()).toFile().exists()) {
       path = path.resolve(type.getShortName());
