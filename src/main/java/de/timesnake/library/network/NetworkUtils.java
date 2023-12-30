@@ -6,8 +6,7 @@ package de.timesnake.library.network;
 
 import com.moandjiezana.toml.Toml;
 import com.moandjiezana.toml.TomlWriter;
-import de.timesnake.database.util.object.Type;
-import de.timesnake.database.util.object.Type.Server;
+import de.timesnake.library.basic.util.ServerType;
 import de.timesnake.library.network.NetworkServer.CopyType;
 import de.timesnake.library.network.NetworkServer.Options;
 import freemarker.template.Configuration;
@@ -40,12 +39,9 @@ public class NetworkUtils implements Network {
   public NetworkUtils(Path networkPath) {
     instance = this;
     this.networkPath = networkPath;
-    this.serverTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME)
-        .resolve(SERVERS_TEMPLATE_NAME);
-    this.worldsTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME)
-        .resolve(WORLDS_TEMPLATE_NAME);
-    this.playersTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME)
-        .resolve(PLAYERS_TEMPLATE_NAME);
+    this.serverTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(SERVERS_TEMPLATE_NAME);
+    this.worldsTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(WORLDS_TEMPLATE_NAME);
+    this.playersTemplatePath = this.networkPath.resolve(TEMPLATE_DIR_NAME).resolve(PLAYERS_TEMPLATE_NAME);
     this.logsPath = this.networkPath.resolve(LOGS_DIR_NAME);
 
     this.cfg = new Configuration(Configuration.VERSION_2_3_29);
@@ -136,20 +132,16 @@ public class NetworkUtils implements Network {
     rootChannel.put("server", server);
 
     Writer outServerProperties = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS)
-            .resolve(server.getName()).resolve("server.properties").toFile()));
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("server.properties").toFile()));
     Files.createDirectories(
         this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("config"));
     Writer outPaperGlobal = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS)
-            .resolve(server.getName()).resolve("config").resolve("paper-global.yml")
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("config").resolve("paper-global.yml")
             .toFile()));
     Writer outSpigot = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS)
-            .resolve(server.getName()).resolve("spigot.yml").toFile()));
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("spigot.yml").toFile()));
     Writer outBukkit = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS)
-            .resolve(server.getName()).resolve("bukkit.yml").toFile()));
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("bukkit.yml").toFile()));
 
     Writer outChannel = new OutputStreamWriter(
         new FileOutputStream(this.networkPath.resolve(SERVERS)
@@ -210,13 +202,11 @@ public class NetworkUtils implements Network {
 
   @Override
   public void syncPlayerData(NetworkServerInfo info) throws IOException {
-    Path src = NetworkFileUtils.resolveTemplatePath(this.playersTemplatePath, info.getType(),
-        info.getTask(),
+    Path src = NetworkFileUtils.resolveTemplatePath(this.playersTemplatePath, info.getType(), info.getTask(),
         DEFAULT_DIRECTORY);
 
     src = src.resolve(PLAYER_DATA);
-    Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName()).resolve("world")
-        .resolve("playerdata");
+    Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName()).resolve("world").resolve("playerdata");
 
     if (dest.toFile().exists()) {
       dest.toFile().delete();
@@ -230,7 +220,7 @@ public class NetworkUtils implements Network {
   public WorldSyncResult syncWorld(NetworkServerInfo server, String worldName) {
 
     String name = server.getName();
-    Type.Server<?> type = server.getType();
+    ServerType type = server.getType();
     String task = server.getTask();
 
     Path src = NetworkFileUtils.resolveWorldTemplatePath(this.worldsTemplatePath, type, task);
@@ -258,8 +248,7 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public WorldSyncResult exportAndSyncWorld(String serverName, String worldName,
-                                            Path exportPath) {
+  public WorldSyncResult exportAndSyncWorld(String serverName, String worldName, Path exportPath) {
 
     Path src = this.networkPath.resolve(SERVERS).resolve(serverName).resolve(worldName);
     Path dest = this.worldsTemplatePath.resolve(exportPath).resolve(worldName);
@@ -283,14 +272,14 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public List<String> getWorldNames(Server<?> type, String task) {
+  public List<String> getWorldNames(ServerType type, String task) {
     Path src = NetworkFileUtils.resolveWorldTemplatePath(this.worldsTemplatePath, type, task);
     String[] names = src.toFile().list();
     return names != null ? Arrays.asList(names) : List.of();
   }
 
   @Override
-  public List<File> getWorldFiles(Server<?> type, String task) {
+  public List<File> getWorldFiles(ServerType type, String task) {
     Path src = NetworkFileUtils.resolveWorldTemplatePath(this.worldsTemplatePath, type, task);
     File[] files = src.toFile().listFiles();
     return files != null ? Arrays.asList(files) : List.of();
@@ -347,14 +336,12 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public ServerInitResult initNewPublicPlayerServer(Type.Server<?> type, String task,
-                                                    String name) {
+  public ServerInitResult initNewPublicPlayerServer(ServerType type, String task, String name) {
     return this.initNewPlayerServer(PUBLIC_DIRECTORY, type, task, name);
   }
 
   @Override
-  public ServerInitResult initNewPlayerServer(UUID uuid, Type.Server<?> type, String task,
-                                              String name) {
+  public ServerInitResult initNewPlayerServer(UUID uuid, ServerType type, String task, String name) {
     Path dest = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
         .resolve(uuid.toString()).resolve(name);
 
@@ -387,8 +374,7 @@ public class NetworkUtils implements Network {
     return new ServerInitResult.Successful(dest);
   }
 
-  private ServerInitResult initNewPlayerServer(String owner, Type.Server<?> type, String task,
-                                               String name) {
+  private ServerInitResult initNewPlayerServer(String owner, ServerType type, String task, String name) {
     Path dest = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
         .resolve(owner).resolve(name);
 
@@ -402,19 +388,18 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public List<String> getPublicPlayerServerNames(Type.Server<?> type, String task) {
+  public List<String> getPublicPlayerServerNames(ServerType type, String task) {
     return this.getPlayerServerNames(PUBLIC_DIRECTORY, type, task);
   }
 
   @Override
-  public List<String> getOwnerServerNames(UUID uuid, Type.Server<?> type, String task) {
+  public List<String> getOwnerServerNames(UUID uuid, ServerType type, String task) {
     return this.getPlayerServerNames(uuid.toString(), type, task);
   }
 
-  private List<String> getPlayerServerNames(String owner, Type.Server<?> type, String task) {
+  private List<String> getPlayerServerNames(String owner, ServerType type, String task) {
     try {
-      Path src = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
-          .resolve(owner);
+      Path src = this.serverTemplatePath.resolve(type.getShortName()).resolve(task).resolve(owner);
       String[] files = src.toFile().list();
       return files != null ? List.of(files) : List.of();
     } catch (InvalidPathException e) {
@@ -423,8 +408,7 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public Map<UUID, List<String>> getMemberServerNames(UUID member, Type.Server<?> type,
-                                                      String task) {
+  public Map<UUID, List<String>> getMemberServerNames(UUID member, ServerType type, String task) {
     Path src = this.serverTemplatePath.resolve(type.getShortName()).resolve(task);
 
     HashMap<UUID, List<String>> serverNamesByOwnerUuid = new HashMap<>();
@@ -435,8 +419,7 @@ public class NetworkUtils implements Network {
       for (String serverName : entry.getValue()) {
         Toml toml;
         try {
-          toml = new Toml().read(src.resolve(uuid.toString()).resolve(serverName)
-              .resolve(OWN_SERVER_INFO_FILE_NAME).toFile());
+          toml = new Toml().read(src.resolve(uuid.toString()).resolve(serverName).resolve(OWN_SERVER_INFO_FILE_NAME).toFile());
         } catch (IllegalStateException e) {
           continue;
         }
@@ -444,8 +427,7 @@ public class NetworkUtils implements Network {
         List<String> memberUuidStrings = toml.getList(OWN_SERVER_MEMBER_UUIDS);
 
         if (memberUuidStrings != null && memberUuidStrings.contains(member.toString())) {
-          serverNamesByOwnerUuid.computeIfAbsent(uuid, uuid1 -> new LinkedList<>())
-              .add(serverName);
+          serverNamesByOwnerUuid.computeIfAbsent(uuid, uuid1 -> new LinkedList<>()).add(serverName);
         }
       }
     }
@@ -453,7 +435,7 @@ public class NetworkUtils implements Network {
     return serverNamesByOwnerUuid;
   }
 
-  private Map<UUID, List<String>> getAllPlayerServerNames(Type.Server<?> type, String task) {
+  private Map<UUID, List<String>> getAllPlayerServerNames(ServerType type, String task) {
     Path src = this.serverTemplatePath.resolve(type.getShortName()).resolve(task);
 
     String[] playerFiles = src.toFile().list();
@@ -486,8 +468,7 @@ public class NetworkUtils implements Network {
 
 
   @Override
-  public List<UUID> getPlayerServerMembers(UUID uuid, Type.Server<?> type, String task,
-                                           String exactName) {
+  public List<UUID> getPlayerServerMembers(UUID uuid, ServerType type, String task, String exactName) {
     File config = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
         .resolve(uuid.toString()).resolve(exactName).resolve(OWN_SERVER_INFO_FILE_NAME)
         .toFile();
@@ -509,12 +490,10 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public boolean setPlayerServerMembers(UUID uuid, Type.Server<?> type, String task,
-                                        String exactName, List<UUID> memberUuids) {
+  public boolean setPlayerServerMembers(UUID uuid, ServerType type, String task, String exactName, List<UUID> memberUuids) {
     Path path;
     try {
-      path = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
-          .resolve(uuid.toString()).resolve(exactName);
+      path = this.serverTemplatePath.resolve(type.getShortName()).resolve(task).resolve(uuid.toString()).resolve(exactName);
     } catch (InvalidPathException e) {
       e.printStackTrace();
       return false;
@@ -533,8 +512,7 @@ public class NetworkUtils implements Network {
     TomlWriter tomlWriter = new TomlWriter();
 
     try {
-      tomlWriter.write(Map.of(OWN_SERVER_MEMBER_UUIDS,
-          memberUuids.stream().map(UUID::toString).toList()), infoFile);
+      tomlWriter.write(Map.of(OWN_SERVER_MEMBER_UUIDS, memberUuids.stream().map(UUID::toString).toList()), infoFile);
     } catch (IOException e) {
       e.printStackTrace();
       return false;
@@ -544,14 +522,12 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public void copyServerFromTemplate(NetworkServerInfo info)
-      throws IOException {
+  public void copyServerFromTemplate(NetworkServerInfo info) throws IOException {
     Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName());
     this.copyServerFromTemplate(info.getType(), info.getTask(), dest);
   }
 
-  private void copyServerFromTemplate(Type.Server<?> type, String task, Path dest)
-      throws IOException {
+  private void copyServerFromTemplate(ServerType type, String task, Path dest) throws IOException {
     Path src = this.serverTemplatePath.toAbsolutePath();
 
     // from base
@@ -581,8 +557,7 @@ public class NetworkUtils implements Network {
     FileUtils.copyDirectory(src.toFile(), dest.toFile());
   }
 
-  private void copyServerFromPlayerTemplate(Type.Server<?> type, String task, Path dest)
-      throws IOException {
+  private void copyServerFromPlayerTemplate(ServerType type, String task, Path dest) throws IOException {
     Path src = NetworkFileUtils.resolveTemplatePath(this.serverTemplatePath, type, task,
         DEFAULT_PLAYER_DIRECTORY);
     FileUtils.copyDirectory(src.toFile(), dest.toFile());

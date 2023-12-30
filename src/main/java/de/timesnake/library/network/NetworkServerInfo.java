@@ -4,16 +4,16 @@
 
 package de.timesnake.library.network;
 
-import de.timesnake.database.util.object.Type;
+import de.timesnake.library.basic.util.ServerType;
 
 public class NetworkServerInfo {
 
   protected final String name;
-  protected final Type.Server<?> type;
+  protected final ServerType type;
   protected String folderName;
   protected String task;
 
-  public NetworkServerInfo(String name, Type.Server<?> type) {
+  public NetworkServerInfo(String name, ServerType type) {
     this.name = name;
     this.type = type;
     this.folderName = name;
@@ -23,7 +23,7 @@ public class NetworkServerInfo {
     return name;
   }
 
-  public Type.Server<?> getType() {
+  public ServerType getType() {
     return type;
   }
 
