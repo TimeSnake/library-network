@@ -7,7 +7,7 @@ plugins {
 
 
 group = "de.timesnake"
-version = '1.3.2'
+version = '1.4.0'
 var projectId = 37
 
 repositories {
@@ -30,12 +30,12 @@ dependencies {
   implementation "org.freemarker:freemarker:2.3.31"
   implementation 'commons-io:commons-io:2.11.0'
 
-  compileOnly "de.timesnake:database-api:2.2.2"
+  compileOnly "de.timesnake:database-api:2.+"
 
-  compileOnly "de.timesnake:channel-api:3.0.6"
+  compileOnly "de.timesnake:channel-api:3.+"
 
-  compileOnly "de.timesnake:library-basic:1.2.2"
-  compileOnly "de.timesnake:library-chat:1.1"
+  compileOnly "de.timesnake:library-basic:1.+"
+  compileOnly "de.timesnake:library-chat:1.+"
 
   compileOnly "com.moandjiezana.toml:toml4j:0.7.3-SNAPSHOT"
 }
