@@ -12,6 +12,7 @@ import java.util.List;
 public class NetworkVariables {
 
   public static final String NETWORK_NAME = "network_name";
+  public static final String RULES_LINK = "rules_link";
   public static final String WEBSITE_LINK = "website_link";
   public static final String SUPPORT_EMAIL = "support_email";
   public static final String DISCORD_LINK = "discord_link";
