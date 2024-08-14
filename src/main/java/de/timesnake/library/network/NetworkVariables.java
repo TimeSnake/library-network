@@ -19,12 +19,13 @@ public class NetworkVariables {
   public static final String PATREON_LINK = "patreon_link";
   public static final String YOUTUBE_LINK = "youtube_link";
   public static final String PRIVACY_POLICY_LINK = "privacy_policy_link";
-  public static final String DEFAULT_TEXTURE_PACK_LINK = "default_texture_pack_link";
+  public static final String DEFAULT_RESOURCE_PACK_LINK = "default_resource_pack_link";
+  public static final String DEFAULT_RESOURCE_PACK_HASH = "default_resource_pack_HASH";
   public static final String COINS_NAME = "coins_name";
 
   public static final List<String> KEYS = List.of(NETWORK_NAME, WEBSITE_LINK, SUPPORT_EMAIL,
-      DISCORD_LINK, PATREON_LINK, YOUTUBE_LINK, DEFAULT_TEXTURE_PACK_LINK, PRIVACY_POLICY_LINK,
-      COINS_NAME);
+      DISCORD_LINK, PATREON_LINK, YOUTUBE_LINK, DEFAULT_RESOURCE_PACK_LINK, DEFAULT_RESOURCE_PACK_HASH,
+      PRIVACY_POLICY_LINK, COINS_NAME);
 
   private final HashMap<String, String> variables = new HashMap<>();
 
