@@ -35,7 +35,6 @@ dependencies {
   compileOnly "de.timesnake:channel-api:4.+"
 
   compileOnly "de.timesnake:library-basic:1.+"
-  compileOnly "de.timesnake:library-chat:1.+"
 
   compileOnly "com.moandjiezana.toml:toml4j:0.7.3-SNAPSHOT"
 }
