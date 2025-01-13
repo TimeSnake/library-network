@@ -27,7 +27,7 @@ dependencies {
     implementation("org.freemarker:freemarker:2.3.31")
     implementation("commons-io:commons-io:2.11.0")
 
-    compileOnly("de.timesnake:database-api:3.+")
+    compileOnly("de.timesnake:database-api:4.+")
     compileOnly("de.timesnake:channel-api:5.+")
     compileOnly("de.timesnake:library-basic:2.+")
 

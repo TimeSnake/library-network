@@ -132,20 +132,24 @@ public class NetworkUtils implements Network {
     rootChannel.put("server", server);
 
     Writer outServerProperties = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("server.properties").toFile()));
-    Files.createDirectories(
-        this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("config"));
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName())
+            .resolve("server.properties").toFile()));
+    Files.createDirectories(this.networkPath.resolve(SERVERS).resolve(server.getName())
+        .resolve("config"));
     Writer outPaperGlobal = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("config").resolve("paper-global.yml")
-            .toFile()));
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName())
+            .resolve("config").resolve("paper-global.yml").toFile()));
     Writer outSpigot = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("spigot.yml").toFile()));
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName())
+            .resolve("spigot.yml").toFile()));
     Writer outBukkit = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName()).resolve("bukkit.yml").toFile()));
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName())
+            .resolve("bukkit.yml").toFile()));
 
     Writer outChannel = new OutputStreamWriter(
         new FileOutputStream(this.networkPath.resolve(SERVERS)
-            .resolve(server.getName()).resolve("plugins").resolve("channel").resolve("config.toml").toFile()));
+            .resolve(server.getName()).resolve("plugins").resolve("channel")
+            .resolve("config.toml").toFile()));
 
     serverProperties.process(rootServerProperties, outServerProperties);
     paperGlobal.process(rootPaperGlobal, outPaperGlobal);
@@ -419,7 +423,8 @@ public class NetworkUtils implements Network {
       for (String serverName : entry.getValue()) {
         Toml toml;
         try {
-          toml = new Toml().read(src.resolve(uuid.toString()).resolve(serverName).resolve(OWN_SERVER_INFO_FILE_NAME).toFile());
+          toml =
+              new Toml().read(src.resolve(uuid.toString()).resolve(serverName).resolve(OWN_SERVER_INFO_FILE_NAME).toFile());
         } catch (IllegalStateException e) {
           continue;
         }
@@ -490,10 +495,12 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public boolean setPlayerServerMembers(UUID uuid, ServerType type, String task, String exactName, List<UUID> memberUuids) {
+  public boolean setPlayerServerMembers(UUID uuid, ServerType type, String task, String exactName,
+                                        List<UUID> memberUuids) {
     Path path;
     try {
-      path = this.serverTemplatePath.resolve(type.getShortName()).resolve(task).resolve(uuid.toString()).resolve(exactName);
+      path =
+          this.serverTemplatePath.resolve(type.getShortName()).resolve(task).resolve(uuid.toString()).resolve(exactName);
     } catch (InvalidPathException e) {
       e.printStackTrace();
       return false;
