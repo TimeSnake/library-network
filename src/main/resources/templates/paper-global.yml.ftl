@@ -1,19 +1,24 @@
-_version: 28
-async-chunks:
-  threads: -1
-chunk-loading:
-  autoconfig-send-distance: true
-  enable-frustum-priority: false
-  global-max-chunk-load-rate: -1.0
-  global-max-chunk-send-rate: -1.0
-  global-max-concurrent-loads: 500.0
-  max-concurrent-sends: 2
-  min-load-radius: 2
-  player-max-chunk-load-rate: -1.0
-  player-max-concurrent-loads: 20.0
-  target-player-chunk-send-rate: 100.0
+<#assign prop = server.getConfigProperties()>
+_version: 29
+block-updates:
+disable-chorus-plant-updates: false
+disable-mushroom-block-updates: false
+disable-noteblock-updates: false
+disable-tripwire-updates: false
+chunk-loading-advanced:
+auto-config-send-distance: true
+player-max-concurrent-chunk-generates: 0
+player-max-concurrent-chunk-loads: 0
+chunk-loading-basic:
+player-max-chunk-generate-rate: -1.0
+player-max-chunk-load-rate: 100.0
+player-max-chunk-send-rate: 75.0
+chunk-system:
+gen-parallelism: default
+io-threads: -1
+worker-threads: -1
 collisions:
-  enable-player-collisions: false
+enable-player-collisions: ${prop["collisions.enable-player-collisions"]!"false"}
   send-full-pos-for-hard-colliding-entities: true
 commands:
   fix-target-selector-tag-completion: true
@@ -36,8 +41,6 @@ item-validation:
   resolve-selectors-in-books: false
 logging:
   deobfuscate-stacktraces: true
-  log-player-ip-addresses: true
-  use-rgb-for-named-text-colors: true
 messages:
   kick:
     authentication-servers-down: <lang:multiplayer.disconnect.authservers_down>
@@ -48,10 +51,14 @@ messages:
     Please contact the server administrators if you believe that this is in error.
   use-display-name-in-quit-message: false
 misc:
+        chat-threads:
+        chat-executor-core-size: -1
+        chat-executor-max-size: -1
+        client-interaction-leniency-distance: default
+        compression-level: default
   fix-entity-position-desync: true
-  lag-compensate-block-breaking: true
   load-permissions-yml-before-plugins: true
-  max-joins-per-tick: 3
+        max-joins-per-tick: 5
   region-file-cache-size: 256
   strict-advancement-dimension-check: false
   use-alternative-luck-formula: false
@@ -87,12 +94,13 @@ spam-limiter:
   recipe-spam-limit: 20
   tab-spam-increment: 1
   tab-spam-limit: 500
-timings:
+            spark:
+            enable-immediately: false
   enabled: true
+            timings:
+            enabled: false
   hidden-config-entries:
   - database
-  - settings.bungeecord-addresses
-  - settings.velocity-support.secret
   - proxies.velocity.secret
   history-interval: 300
   history-length: 3600
@@ -101,10 +109,14 @@ timings:
   url: https://timings.aikar.co/
   verbose: true
 unsupported-settings:
-  allow-headless-pistons: false
-  allow-permanent-block-break-exploits: false
-  allow-piston-duplication: false
+            allow-headless-pistons: ${prop["unsupported-settings.allow-headless-pistons"]!"false"}
+            allow-permanent-block-break-exploits: ${prop["unsupported-settings.allow-permanent-block-break-exploits"]!"false"}
+            allow-piston-duplication: ${prop["unsupported-settings.allow-piston-duplication"]!"false"}
+            allow-tripwire-disarming-exploits: false
+            allow-unsafe-end-portal-teleportation: false
+            compression-format: ZLIB
   perform-username-validation: true
+            skip-vanilla-damage-tick-when-shield-blocked: false
 watchdog:
   early-warning-delay: 10000
   early-warning-every: 5000

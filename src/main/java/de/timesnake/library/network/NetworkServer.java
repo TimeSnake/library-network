@@ -6,15 +6,11 @@ package de.timesnake.library.network;
 
 import de.timesnake.library.basic.util.ServerType;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class NetworkServer extends NetworkServerInfo {
-
-  public static final int DEFAULT_MAX_HEALTH = 2048;
-  public static final int DEFAULT_MAX_PLAYERS = 100;
-  public static final int DEFAULT_PLAYER_TRACKING_RANGE = 48;
-  public static final int DEFAULT_VIEW_DISTANCE = 10;
-  public static final int DEFAULT_SIMULATION_DISTANCE = 10;
 
   protected final int port;
   protected String velocitySecret;
@@ -25,13 +21,9 @@ public class NetworkServer extends NetworkServerInfo {
   protected int channelPortOffset;
   protected int channelProxyPort;
 
-  protected int maxPlayers = DEFAULT_MAX_PLAYERS;
-  protected int playerTrackingRange = DEFAULT_PLAYER_TRACKING_RANGE;
-  protected int maxHealth = DEFAULT_MAX_HEALTH;
-  protected boolean allowNether = false;
-  protected boolean allowEnd = false;
-  protected int viewDistance = DEFAULT_VIEW_DISTANCE;
-  protected int simulationDistance = DEFAULT_SIMULATION_DISTANCE;
+  protected int maxPlayers = 100;
+
+  protected final HashMap<String, String> configProperties = new HashMap<>();
 
   private final Options options = new Options();
 
@@ -61,74 +53,12 @@ public class NetworkServer extends NetworkServerInfo {
     return velocitySecret;
   }
 
-  public boolean isAllowNether() {
-    return allowNether;
-  }
-
-  public String isAllowNetherString() {
-    return allowNether ? "true" : "false";
-  }
-
   public int getMaxPlayers() {
     return maxPlayers;
   }
 
   public NetworkServer setMaxPlayers(int maxPlayers) {
     this.maxPlayers = maxPlayers;
-    return this;
-  }
-
-  public NetworkServer allowNether(boolean allow) {
-    this.allowNether = allow;
-    return this;
-  }
-
-  public boolean isAllowEnd() {
-    return allowEnd;
-  }
-
-  public String isAllowEndString() {
-    return allowEnd ? "true" : "false";
-  }
-
-  public NetworkServer allowEnd(boolean allow) {
-    this.allowEnd = allow;
-    return this;
-  }
-
-  public int getPlayerTrackingRange() {
-    return playerTrackingRange;
-  }
-
-  public NetworkServer setPlayerTrackingRange(int playerTrackingRange) {
-    this.playerTrackingRange = playerTrackingRange;
-    return this;
-  }
-
-  public int getMaxHealth() {
-    return maxHealth;
-  }
-
-  public NetworkServer setMaxHealth(int maxHealth) {
-    this.maxHealth = maxHealth;
-    return this;
-  }
-
-  public int getViewDistance() {
-    return this.viewDistance;
-  }
-
-  public NetworkServer setViewDistance(int viewDistance) {
-    this.viewDistance = viewDistance;
-    return this;
-  }
-
-  public int getSimulationDistance() {
-    return this.simulationDistance;
-  }
-
-  public NetworkServer setSimulationDistance(int simulationDistance) {
-    this.simulationDistance = simulationDistance;
     return this;
   }
 
@@ -193,6 +123,20 @@ public class NetworkServer extends NetworkServerInfo {
 
   public Options getOptions() {
     return options;
+  }
+
+  public NetworkServer configProperty(String key, String value) {
+    this.configProperties.put(key, value);
+    return this;
+  }
+
+  public HashMap<String, String> getConfigProperties() {
+    return configProperties;
+  }
+
+  public NetworkServer applyServerOptions(Map<String, String> serverOptions) {
+    this.configProperties.putAll(serverOptions);
+    return this;
   }
 
   public enum CopyType {
