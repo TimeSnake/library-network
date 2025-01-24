@@ -14,7 +14,7 @@ settings:
   netty-threads: 16
   attribute:
     maxHealth:
-max: ${prop["settings.attribute.maxHealth"]!"2048"}
+      max: ${prop["settings.attribute.maxHealth"]!"2048"}
     movementSpeed:
       max: 2048.0
     attackDamage:
@@ -58,7 +58,7 @@ world-settings:
     below-zero-generation-in-existing-chunks: true
     verbose: false
     entity-tracking-range:
-players: ${prop["world-settings.default.entity-tracking-range.players"]!"48"}
+      players: ${prop["world-settings.default.entity-tracking-range.players"]!"48"}
       animals: 48
       monsters: 48
       misc: 32

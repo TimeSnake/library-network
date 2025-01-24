@@ -18,7 +18,7 @@ gen-parallelism: default
 io-threads: -1
 worker-threads: -1
 collisions:
-enable-player-collisions: ${prop["collisions.enable-player-collisions"]!"false"}
+  enable-player-collisions: ${prop["collisions.enable-player-collisions"]!"false"}
   send-full-pos-for-hard-colliding-entities: true
 commands:
   fix-target-selector-tag-completion: true
@@ -51,14 +51,14 @@ messages:
     Please contact the server administrators if you believe that this is in error.
   use-display-name-in-quit-message: false
 misc:
-        chat-threads:
-        chat-executor-core-size: -1
-        chat-executor-max-size: -1
-        client-interaction-leniency-distance: default
-        compression-level: default
+  chat-threads:
+  chat-executor-core-size: -1
+  chat-executor-max-size: -1
+  client-interaction-leniency-distance: default
+  compression-level: default
   fix-entity-position-desync: true
   load-permissions-yml-before-plugins: true
-        max-joins-per-tick: 5
+  max-joins-per-tick: 5
   region-file-cache-size: 256
   strict-advancement-dimension-check: false
   use-alternative-luck-formula: false
@@ -94,29 +94,29 @@ spam-limiter:
   recipe-spam-limit: 20
   tab-spam-increment: 1
   tab-spam-limit: 500
-            spark:
-            enable-immediately: false
+spark:
+  enable-immediately: false
   enabled: true
-            timings:
-            enabled: false
-  hidden-config-entries:
+  timings:
+  enabled: false
+hidden-config-entries:
   - database
   - proxies.velocity.secret
-  history-interval: 300
-  history-length: 3600
-  server-name: Unknown Server
-  server-name-privacy: false
-  url: https://timings.aikar.co/
-  verbose: true
+history-interval: 300
+history-length: 3600
+server-name: Unknown Server
+server-name-privacy: false
+url: https://timings.aikar.co/
+verbose: true
 unsupported-settings:
-            allow-headless-pistons: ${prop["unsupported-settings.allow-headless-pistons"]!"false"}
-            allow-permanent-block-break-exploits: ${prop["unsupported-settings.allow-permanent-block-break-exploits"]!"false"}
-            allow-piston-duplication: ${prop["unsupported-settings.allow-piston-duplication"]!"false"}
-            allow-tripwire-disarming-exploits: false
-            allow-unsafe-end-portal-teleportation: false
-            compression-format: ZLIB
+  allow-headless-pistons: ${prop["unsupported-settings.allow-headless-pistons"]!"false"}
+  allow-permanent-block-break-exploits: ${prop["unsupported-settings.allow-permanent-block-break-exploits"]!"false"}
+  allow-piston-duplication: ${prop["unsupported-settings.allow-piston-duplication"]!"false"}
+  allow-tripwire-disarming-exploits: false
+  allow-unsafe-end-portal-teleportation: false
+  compression-format: ZLIB
   perform-username-validation: true
-            skip-vanilla-damage-tick-when-shield-blocked: false
+  skip-vanilla-damage-tick-when-shield-blocked: false
 watchdog:
   early-warning-delay: 10000
   early-warning-every: 5000
