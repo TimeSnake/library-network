@@ -1,7 +1,7 @@
 <#assign prop = server.getConfigProperties()>
 settings:
   minimum-api: none
-allow-end: ${prop["settings.allow-end"]!"false"}
+  allow-end: ${prop["settings.allow-end"]!"false"}
   warn-on-overload: true
   permissions-file: permissions.yml
   update-folder: update
