@@ -10,11 +10,11 @@ public interface ServerCreationResult {
 
   boolean isSuccessful();
 
-  class Successful implements ServerCreationResult {
+  class Success implements ServerCreationResult {
 
     private final Path serverPath;
 
-    public Successful(Path serverPath) {
+    public Success(Path serverPath) {
       this.serverPath = serverPath;
     }
 

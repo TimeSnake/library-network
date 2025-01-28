@@ -31,6 +31,9 @@ dependencies {
     compileOnly("de.timesnake:channel-api:5.+")
     compileOnly("de.timesnake:library-basic:2.+")
 
+    compileOnly("org.apache.logging.log4j:log4j-api:2.22.1")
+    compileOnly("org.apache.logging.log4j:log4j-core:2.22.1")
+
     compileOnly("com.moandjiezana.toml:toml4j:0.7.3-SNAPSHOT")
 }
 
