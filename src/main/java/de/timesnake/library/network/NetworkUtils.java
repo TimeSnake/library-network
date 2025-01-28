@@ -14,6 +14,8 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -28,6 +30,9 @@ public class NetworkUtils implements Network {
   }
 
   private static Network instance;
+
+  private final Logger logger = LogManager.getLogger("network-utils");
+
   private final Path networkPath;
   private final Path serverTemplatePath;
   private final Path worldsTemplatePath;
@@ -61,7 +66,7 @@ public class NetworkUtils implements Network {
     try {
       this.copyServerFromTemplate(server);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("No template found for server {}: {}", server.getName(), e.getMessage());
       return new ServerCreationResult.Fail("no server template found");
     }
 
@@ -69,14 +74,14 @@ public class NetworkUtils implements Network {
       try {
         this.copyServerWorlds(server);
       } catch (IOException e) {
-        e.printStackTrace();
+        this.logger.warn("Failed to copy worlds for server {}: {}", server.getName(), e.getMessage());
         return new ServerCreationResult.Fail("failed to copy worlds");
       }
     } else if (options.getWorldCopyType() == CopyType.SYNC) {
       try {
         this.syncServerWorlds(server);
       } catch (IOException e) {
-        e.printStackTrace();
+        this.logger.warn("Failed to sync worlds for server {}: {}", server.getName(), e.getMessage());
         return new ServerCreationResult.Fail("failed to sync worlds");
       }
     }
@@ -84,7 +89,7 @@ public class NetworkUtils implements Network {
     try {
       this.generateConfigurations(server);
     } catch (IOException | TemplateException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to generate config files for server {}: {}", server.getName(), e.getMessage());
       return new ServerCreationResult.Fail("failed to generate config files");
     }
 
@@ -102,12 +107,12 @@ public class NetworkUtils implements Network {
       try {
         this.syncLogs(server);
       } catch (IOException e) {
-        e.printStackTrace();
+        this.logger.warn("Failed to sync logs for server {}: {}", server.getName(), e.getMessage());
         return new ServerCreationResult.Fail("failed to sync logs");
       }
     }
 
-    return new ServerCreationResult.Successful(
+    return new ServerCreationResult.Success(
         this.networkPath.resolve(SERVERS).resolve(server.getName()));
   }
 
@@ -222,7 +227,6 @@ public class NetworkUtils implements Network {
 
   @Override
   public WorldSyncResult syncWorld(NetworkServerInfo server, String worldName) {
-
     String name = server.getName();
     ServerType type = server.getType();
     String task = server.getTask();
@@ -236,7 +240,7 @@ public class NetworkUtils implements Network {
       try {
         FileUtils.delete(dest.toFile());
       } catch (IOException e) {
-        e.printStackTrace();
+        this.logger.warn("Failed to delete old world file for server {}: {}", server.getName(), e.getMessage());
         return new WorldSyncResult.Fail("failed to delete old world file");
       }
     }
@@ -244,7 +248,7 @@ public class NetworkUtils implements Network {
     try {
       Files.createSymbolicLink(dest, src);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to create world link for server {}: {}", server.getName(), e.getMessage());
       return new WorldSyncResult.Fail("failed to create world link");
     }
 
@@ -253,7 +257,6 @@ public class NetworkUtils implements Network {
 
   @Override
   public WorldSyncResult exportAndSyncWorld(String serverName, String worldName, Path exportPath) {
-
     Path src = this.networkPath.resolve(SERVERS).resolve(serverName).resolve(worldName);
     Path dest = this.worldsTemplatePath.resolve(exportPath).resolve(worldName);
 
@@ -261,14 +264,14 @@ public class NetworkUtils implements Network {
       FileUtils.copyDirectory(src.toFile(), dest.toFile());
       FileUtils.deleteDirectory(src.toFile());
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to export world for server {}: {}", serverName, e.getMessage());
       return new WorldSyncResult.Fail("failed to export world");
     }
 
     try {
       Files.createSymbolicLink(src, dest);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to create world link for server {}: {}", serverName, e.getMessage());
       return new WorldSyncResult.Fail("failed to create world link");
     }
 
@@ -311,32 +314,32 @@ public class NetworkUtils implements Network {
           .resolve(server.getFolderName());
       NetworkFileUtils.createSymLinks(src, dest);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to link server files for server {}: {}", server.getName(), e.getMessage());
       return new ServerCreationResult.Fail("failed to link server files");
     }
 
     try {
       this.copyServerFromTemplate(server);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("No server template found for server {}: {}", server.getName(), e.getMessage());
       return new ServerCreationResult.Fail("no server template found");
     }
 
     try {
       this.generateConfigurations(server);
     } catch (IOException | TemplateException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to generate config files for server {}: {}", server.getName(), e.getMessage());
       return new ServerCreationResult.Fail("failed to generate config files");
     }
 
     try {
       this.syncLogs(server);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to sync logs for server {}: {}", server.getName(), e.getMessage());
       return new ServerCreationResult.Fail("failed to sync logs");
     }
 
-    return new ServerCreationResult.Successful(dest);
+    return new ServerCreationResult.Success(dest);
   }
 
   @Override
@@ -361,7 +364,7 @@ public class NetworkUtils implements Network {
       try {
         infoFile.createNewFile();
       } catch (IOException e) {
-        e.printStackTrace();
+        this.logger.warn("Failed to create server info file for server {} {} {}: {}", uuid, task, name, e.getMessage());
         return new ServerInitResult.Fail("failed to create server info file");
       }
     }
@@ -371,7 +374,8 @@ public class NetworkUtils implements Network {
     try {
       tomlWriter.write(Map.of(OWN_SERVER_OWNER_UUID, uuid.toString()), infoFile);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to write into server info file for server {} {} {}: {}", uuid, task, name,
+          e.getMessage());
       return new ServerInitResult.Fail("failed to write into server info file");
     }
 
@@ -385,7 +389,7 @@ public class NetworkUtils implements Network {
     try {
       this.copyServerFromPlayerTemplate(type, task, dest);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("No server template found for server {} {} {}: {}", owner, task, name, e.getMessage());
       return new ServerInitResult.Fail("no server template found");
     }
     return new ServerInitResult.Successful(dest);
@@ -417,8 +421,7 @@ public class NetworkUtils implements Network {
 
     HashMap<UUID, List<String>> serverNamesByOwnerUuid = new HashMap<>();
 
-    for (Map.Entry<UUID, List<String>> entry : this.getAllPlayerServerNames(type, task)
-        .entrySet()) {
+    for (Map.Entry<UUID, List<String>> entry : this.getAllPlayerServerNames(type, task).entrySet()) {
       UUID uuid = entry.getKey();
       for (String serverName : entry.getValue()) {
         Toml toml;
@@ -490,8 +493,7 @@ public class NetworkUtils implements Network {
     }
 
     List<String> memberUuidStrings = toml.getList(OWN_SERVER_MEMBER_UUIDS);
-    return memberUuidStrings != null ? memberUuidStrings.stream().map(UUID::fromString).toList()
-        : List.of();
+    return memberUuidStrings != null ? memberUuidStrings.stream().map(UUID::fromString).toList() : List.of();
   }
 
   @Override
@@ -502,7 +504,8 @@ public class NetworkUtils implements Network {
       path =
           this.serverTemplatePath.resolve(type.getShortName()).resolve(task).resolve(uuid.toString()).resolve(exactName);
     } catch (InvalidPathException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to find server info file for server {} {} {}: {}", uuid, task, exactName,
+          e.getMessage());
       return false;
     }
     File infoFile = new File(path.toFile(), OWN_SERVER_INFO_FILE_NAME);
@@ -511,7 +514,8 @@ public class NetworkUtils implements Network {
       try {
         infoFile.createNewFile();
       } catch (IOException e) {
-        e.printStackTrace();
+        this.logger.warn("Failed to create server info file for server {} {} {}: {}", uuid, task, exactName,
+            e.getMessage());
         return false;
       }
     }
@@ -521,10 +525,11 @@ public class NetworkUtils implements Network {
     try {
       tomlWriter.write(Map.of(OWN_SERVER_MEMBER_UUIDS, memberUuids.stream().map(UUID::toString).toList()), infoFile);
     } catch (IOException e) {
-      e.printStackTrace();
+      this.logger.warn("Failed to write into server info file for server {} {} {}: {}", uuid, task, exactName,
+          e.getMessage());
+
       return false;
     }
-
     return true;
   }
 
@@ -546,7 +551,6 @@ public class NetworkUtils implements Network {
       if (src.resolve(BASIS_DIRECTORY).toFile().exists()) {
         FileUtils.copyDirectory(src.resolve(BASIS_DIRECTORY).toFile(), dest.toFile());
       }
-
       if (task != null && src.resolve(task).toFile().exists()) {
         src = src.resolve(task);
         if (src.resolve(DEFAULT_DIRECTORY).toFile().exists()) {
@@ -565,8 +569,7 @@ public class NetworkUtils implements Network {
   }
 
   private void copyServerFromPlayerTemplate(ServerType type, String task, Path dest) throws IOException {
-    Path src = NetworkFileUtils.resolveTemplatePath(this.serverTemplatePath, type, task,
-        DEFAULT_PLAYER_DIRECTORY);
+    Path src = NetworkFileUtils.resolveTemplatePath(this.serverTemplatePath, type, task, DEFAULT_PLAYER_DIRECTORY);
     FileUtils.copyDirectory(src.toFile(), dest.toFile());
   }
 

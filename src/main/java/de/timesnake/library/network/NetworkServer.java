@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 
 public class NetworkServer extends NetworkServerInfo {
 
-  protected final int port;
+  protected int port;
   protected String velocitySecret;
   protected String channelHostName;
   protected String channelListenHostName;
@@ -27,9 +27,17 @@ public class NetworkServer extends NetworkServerInfo {
 
   private final Options options = new Options();
 
-  public NetworkServer(String name, int port, ServerType type) {
+  public NetworkServer(String name, ServerType type) {
     super(name, type);
+  }
+
+  public NetworkServer setPort(int port) {
     this.port = port;
+    return this;
+  }
+
+  public int getPort() {
+    return port;
   }
 
   public NetworkServer setFolderName(String name) {
@@ -38,10 +46,6 @@ public class NetworkServer extends NetworkServerInfo {
 
   public NetworkServer setTask(String task) {
     return ((NetworkServer) super.setTask(task));
-  }
-
-  public int getPort() {
-    return port;
   }
 
   public NetworkServer setVelocitySecret(String velocitySecret) {
