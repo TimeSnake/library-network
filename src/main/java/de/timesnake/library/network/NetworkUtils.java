@@ -198,7 +198,7 @@ public class NetworkUtils implements Network {
 
     src = src.resolve(info.getName()).resolve(DATE_FORMAT.format(new Date()));
 
-    Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName()).resolve("logs");
+    Path dest = this.networkPath.resolve(SERVERS).resolve(info.getName()).resolve("logs");
 
     if (dest.toFile().exists()) {
       dest.toFile().delete();
@@ -293,12 +293,12 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public ServerCreationResult createPublicPlayerServer(NetworkServer server) {
+  public ServerCreationResult loadPublicSave(NetworkServer server) {
     return this.createPlayerServer(PUBLIC_DIRECTORY, server);
   }
 
   @Override
-  public ServerCreationResult createPlayerServer(UUID uuid, NetworkServer server) {
+  public ServerCreationResult loadPrivateSave(UUID uuid, NetworkServer server) {
     return this.createPlayerServer(uuid.toString(), server);
   }
 
@@ -343,12 +343,12 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public ServerInitResult initNewPublicPlayerServer(ServerType type, String task, String name) {
+  public ServerInitResult createPublicSave(ServerType type, String task, String name) {
     return this.initNewPlayerServer(PUBLIC_DIRECTORY, type, task, name);
   }
 
   @Override
-  public ServerInitResult initNewPlayerServer(UUID uuid, ServerType type, String task, String name) {
+  public ServerInitResult createPrivateSave(UUID uuid, ServerType type, String task, String name) {
     Path dest = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
         .resolve(uuid.toString()).resolve(name);
 
@@ -396,12 +396,12 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public List<String> getPublicPlayerServerNames(ServerType type, String task) {
+  public List<String> getPublicSaveNames(ServerType type, String task) {
     return this.getPlayerServerNames(PUBLIC_DIRECTORY, type, task);
   }
 
   @Override
-  public List<String> getOwnerServerNames(UUID uuid, ServerType type, String task) {
+  public List<String> getPrivateSaveNames(UUID uuid, ServerType type, String task) {
     return this.getPlayerServerNames(uuid.toString(), type, task);
   }
 
@@ -416,7 +416,7 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public Map<UUID, List<String>> getMemberServerNames(UUID member, ServerType type, String task) {
+  public Map<UUID, List<String>> getMemberSaveNames(UUID member, ServerType type, String task) {
     Path src = this.serverTemplatePath.resolve(type.getShortName()).resolve(task);
 
     HashMap<UUID, List<String>> serverNamesByOwnerUuid = new HashMap<>();
@@ -476,7 +476,7 @@ public class NetworkUtils implements Network {
 
 
   @Override
-  public List<UUID> getPlayerServerMembers(UUID uuid, ServerType type, String task, String exactName) {
+  public List<UUID> getPrivateSaveMembers(UUID uuid, ServerType type, String task, String exactName) {
     File config = this.serverTemplatePath.resolve(type.getShortName()).resolve(task)
         .resolve(uuid.toString()).resolve(exactName).resolve(OWN_SERVER_INFO_FILE_NAME)
         .toFile();
@@ -497,8 +497,8 @@ public class NetworkUtils implements Network {
   }
 
   @Override
-  public boolean setPlayerServerMembers(UUID uuid, ServerType type, String task, String exactName,
-                                        List<UUID> memberUuids) {
+  public boolean setPrivateSaveMembers(UUID uuid, ServerType type, String task, String exactName,
+                                       List<UUID> memberUuids) {
     Path path;
     try {
       path =
@@ -535,7 +535,7 @@ public class NetworkUtils implements Network {
 
   @Override
   public void copyServerFromTemplate(NetworkServerInfo info) throws IOException {
-    Path dest = this.networkPath.resolve(SERVERS).resolve(info.getFolderName());
+    Path dest = this.networkPath.resolve(SERVERS).resolve(info.getName());
     this.copyServerFromTemplate(info.getType(), info.getTask(), dest);
   }
 

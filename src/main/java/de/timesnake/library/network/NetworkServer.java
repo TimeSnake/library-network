@@ -5,12 +5,57 @@
 package de.timesnake.library.network;
 
 import de.timesnake.library.basic.util.ServerType;
+import de.timesnake.library.basic.util.Tuple;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class NetworkServer extends NetworkServerInfo {
+
+  public static String getTmpServerName(ServerType type, String id) {
+    return type.getTag() + id;
+  }
+
+  public static String getPublicSaveServerName(String category, String name) {
+    return category + "_" + name;
+  }
+
+  public static String getPrivateSaveServerName(String category, UUID owner, String name) {
+    return category + "_" + owner.hashCode() + "_" + name;
+  }
+
+  public static String getPrivateSaveNameFromServerName(String serverName, UUID owner) {
+    return serverName.split(owner.hashCode() + "_", 2)[1];
+  }
+
+  public static String getPublicSaveNameFromServerName(String serverName, String category) {
+    return serverName.split(category + "_", 2)[1];
+  }
+
+  public static String getTmpTwinServerName(String category, ServerType type, String id1, String id2) {
+    return category + "_" + type.getTag() + id1 + "_" + id2;
+  }
+
+  public static NetworkServer createTmpServer(ServerType type, String id) {
+    return new NetworkServer(type, getTmpServerName(type, id));
+  }
+
+  public static Tuple<NetworkServer, NetworkServer> createTmpTwinServer(String category, ServerType type1, String id1,
+                                                                        ServerType type2, String id2) {
+    return new Tuple<>(
+        new NetworkServer(type1, getTmpTwinServerName(category, type1, id1, id2)),
+        new NetworkServer(type2, getTmpTwinServerName(category, type2, id2, id1)));
+  }
+
+  public static NetworkServer createPublicSaveServer(ServerType type, String category, String name) {
+    return new NetworkServer(type, getPublicSaveServerName(category, name));
+  }
+
+  public static NetworkServer createPrivateSaveServer(ServerType type, String category, UUID owner, String name) {
+    return new NetworkServer(type, getPrivateSaveServerName(category, owner, name));
+  }
 
   protected int port;
   protected String velocitySecret;
@@ -27,7 +72,7 @@ public class NetworkServer extends NetworkServerInfo {
 
   private final Options options = new Options();
 
-  public NetworkServer(String name, ServerType type) {
+  private NetworkServer(ServerType type, String name) {
     super(name, type);
   }
 
