@@ -58,21 +58,21 @@ public interface Network {
 
   List<File> getWorldFiles(ServerType type, String task);
 
-  ServerCreationResult createPublicPlayerServer(NetworkServer server);
+  ServerCreationResult loadPublicSave(NetworkServer server);
 
-  ServerCreationResult createPlayerServer(UUID uuid, NetworkServer server);
+  ServerCreationResult loadPrivateSave(UUID uuid, NetworkServer server);
 
-  ServerInitResult initNewPublicPlayerServer(ServerType type, String task, String name);
+  ServerInitResult createPublicSave(ServerType type, String task, String name);
 
-  ServerInitResult initNewPlayerServer(UUID uuid, ServerType type, String task, String name);
+  ServerInitResult createPrivateSave(UUID uuid, ServerType type, String task, String name);
 
-  List<String> getPublicPlayerServerNames(ServerType type, String task);
+  List<String> getPublicSaveNames(ServerType type, String task);
 
-  List<String> getOwnerServerNames(UUID uuid, ServerType type, String task);
+  List<String> getPrivateSaveNames(UUID uuid, ServerType type, String task);
 
-  Map<UUID, List<String>> getMemberServerNames(UUID member, ServerType type, String task);
+  Map<UUID, List<String>> getMemberSaveNames(UUID member, ServerType type, String task);
 
-  List<UUID> getPlayerServerMembers(UUID uuid, ServerType type, String task, String name);
+  List<UUID> getPrivateSaveMembers(UUID uuid, ServerType type, String task, String name);
 
-  boolean setPlayerServerMembers(UUID uuid, ServerType type, String task, String name, List<UUID> memberUuids);
+  boolean setPrivateSaveMembers(UUID uuid, ServerType type, String task, String name, List<UUID> memberUuids);
 }
