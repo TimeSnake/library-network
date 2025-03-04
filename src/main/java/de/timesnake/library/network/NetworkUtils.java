@@ -151,9 +151,11 @@ public class NetworkUtils implements Network {
         new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName())
             .resolve("bukkit.yml").toFile()));
 
+    Files.createDirectories(this.networkPath.resolve(SERVERS).resolve(server.getName())
+        .resolve("plugins").resolve("channel"));
     Writer outChannel = new OutputStreamWriter(
-        new FileOutputStream(this.networkPath.resolve(SERVERS)
-            .resolve(server.getName()).resolve("plugins").resolve("channel")
+        new FileOutputStream(this.networkPath.resolve(SERVERS).resolve(server.getName())
+            .resolve("plugins").resolve("channel")
             .resolve("config.toml").toFile()));
 
     serverProperties.process(rootServerProperties, outServerProperties);
