@@ -98,7 +98,6 @@ spark:
   enable-immediately: false
   enabled: true
   timings:
-  enabled: false
 hidden-config-entries:
   - database
   - proxies.velocity.secret
