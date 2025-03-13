@@ -7,7 +7,7 @@ plugins {
 
 
 group = "de.timesnake"
-version = "2.0.0"
+version = "3.0.0"
 var projectId = 37
 
 repositories {
@@ -24,25 +24,28 @@ repositories {
 }
 
 dependencies {
-    implementation("org.freemarker:freemarker:2.3.31")
-    implementation("commons-io:commons-io:2.11.0")
+    api("org.freemarker:freemarker:2.3.31")
+    api("commons-io:commons-io:2.14.0")
 
-    compileOnly("de.timesnake:database-api:4.+")
-    compileOnly("de.timesnake:channel-api:5.+")
-    compileOnly("de.timesnake:library-basic:2.+")
+    api("de.timesnake:database-api:5.+")
+    api("de.timesnake:channel-api:6.+")
+    api("de.timesnake:library-basic:3.+")
 
-    compileOnly("org.apache.logging.log4j:log4j-api:2.22.1")
-    compileOnly("org.apache.logging.log4j:log4j-core:2.22.1")
+    api("org.apache.logging.log4j:log4j-api:2.22.1")
+    api("org.apache.logging.log4j:log4j-core:2.22.1")
 
-    compileOnly("com.moandjiezana.toml:toml4j:0.7.3-SNAPSHOT")
+    api("com.moandjiezana.toml:toml4j:0.7.3-SNAPSHOT")
 }
 
-configurations.configureEach {
-    resolutionStrategy.dependencySubstitution {
-        if (project.parent != null) {
-            substitute(module("de.timesnake:database-api")).using(project(":database:database-api"))
-            substitute(module("de.timesnake:channel-api")).using(project(":channel:channel-api"))
-            substitute(module("de.timesnake:library-basic")).using(project(":libraries:library-basic"))
+configurations.all {
+    resolutionStrategy.dependencySubstitution.all {
+        requested.let {
+            if (it is ModuleComponentSelector && it.group == "de.timesnake") {
+                val targetProject = findProject(":${it.module}")
+                if (targetProject != null) {
+                    useTarget(targetProject)
+                }
+            }
         }
     }
 }
